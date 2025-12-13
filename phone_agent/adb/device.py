@@ -213,6 +213,16 @@ def launch_app(app_name: str, device_id: str | None = None, delay: float = 1.0) 
         ],
         capture_output=True,
     )
+    adb_command = adb_prefix+ [
+            "shell",
+            "monkey",
+            "-p",
+            package,
+            "-c",
+            "android.intent.category.LAUNCHER",
+            "1",
+        ]
+    print(f"launch_app ADB command: {' '.join(adb_command)}")
     time.sleep(delay)
     return True
 
