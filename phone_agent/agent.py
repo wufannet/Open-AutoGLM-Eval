@@ -17,7 +17,7 @@ from phone_agent.model.client import MessageBuilder
 class AgentConfig:
     """Configuration for the PhoneAgent."""
 
-    max_steps: int = 100
+    max_steps: int = 10
     device_id: str | None = None
     lang: str = "cn"
     system_prompt: str | None = None
@@ -183,6 +183,8 @@ class PhoneAgent:
 
         # Parse action from response
         try:
+            # print(f"Response: {response} Response end")
+            print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}")
             action = parse_action(response.action)
         except ValueError:
             if self.agent_config.verbose:
