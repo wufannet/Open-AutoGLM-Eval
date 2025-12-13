@@ -289,7 +289,7 @@ def parse_action(response: str) -> dict[str, Any]:
                 "message": response.replace("finish(message=", "")[1:-2],
             }
         else:
-            raise ValueError(f"Failed to parse action: {response}")
+            raise ValueError(f"Failed to parse action: {response} Failed to parse action end")
         return action
     except Exception as e:
         raise ValueError(f"Failed to parse action: {e}")
