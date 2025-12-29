@@ -17,7 +17,7 @@ from phone_agent.model.client import MessageBuilder
 class AgentConfig:
     """Configuration for the PhoneAgent."""
 
-    max_steps: int = 10
+    max_steps: int = 100
     device_id: str | None = None
     lang: str = "cn"
     system_prompt: str | None = None
