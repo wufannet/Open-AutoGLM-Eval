@@ -6,12 +6,22 @@
 <img src=resources/logo.svg width="20%"/>
 </div>
 <p align="center">
-    👋 Join our <a href="resources/WECHAT.md" target="_blank">WeChat</a> and <a href="https://discord.gg/QR7SARHRxK" target="_blank">Discord</a> communities
+    👋 Join our <a href="resources/WECHAT.md" target="_blank">WeChat</a> or <a href="https://discord.gg/QR7SARHRxK" target="_blank">Discord</a> communities
 </p>
+
+## Quick Start
+
+You can use Claude Code with [GLM Coding Plan](https://z.ai/subscribe) and enter the following prompt to quickly deploy this project:
+
+```
+Access the documentation and install AutoGLM for me
+https://raw.githubusercontent.com/zai-org/Open-AutoGLM/refs/heads/main/README_en.md
+```
 
 ## Project Introduction
 
 Phone Agent is a mobile intelligent assistant framework built on AutoGLM. It understands phone screen content in a multimodal manner and helps users complete tasks through automated operations. The system controls devices via ADB (Android Debug Bridge), perceives screens using vision-language models, and generates and executes operation workflows through intelligent planning. Users simply describe their needs in natural language, such as "Open eBay and search for wireless earphones." and Phone Agent will automatically parse the intent, understand the current interface, plan the next action, and complete the entire workflow. The system also includes a sensitive operation confirmation mechanism and supports manual takeover during login or verification code scenarios. Additionally, it provides remote ADB debugging capabilities, allowing device connection via WiFi or network for flexible remote control and development.
+
 > ⚠️ This project is for research and learning purposes only. It is strictly prohibited to use for illegal information acquisition, system interference, or any illegal activities. Please carefully review the [Terms of Use](resources/privacy_policy_en.txt).
 
 ## Model Download Links
@@ -29,7 +39,11 @@ Phone Agent is a mobile intelligent assistant framework built on AutoGLM. It und
 
 Python 3.10 or higher is recommended.
 
-### 2. ADB (Android Debug Bridge)
+### 2. Device Debug Tools
+
+Choose the appropriate tool based on your device type:
+
+#### For Android Devices - Using ADB
 
 1. Download the official ADB [installation package](https://developer.android.com/tools/releases/platform-tools) and extract it to a custom path
 2. Configure environment variables
@@ -43,7 +57,22 @@ Python 3.10 or higher is recommended.
 
 - Windows configuration: Refer to [third-party tutorials](https://blog.csdn.net/x2584179909/article/details/108319973) for configuration.
 
-### 3. Android 7.0+ Device or Emulator with `Developer Mode` and `USB Debugging` Enabled
+#### For HarmonyOS Devices - Using HDC
+
+1. Download HDC tool:
+   - From [HarmonyOS SDK](https://developer.huawei.com/consumer/en/download/)
+2. Configure environment variables
+
+- MacOS/Linux configuration:
+
+  ```bash
+  # Assuming the extracted directory is ~/Downloads/harmonyos-sdk/toolchains. Adjust according to actual path.
+  export PATH=${PATH}:~/Downloads/harmonyos-sdk/toolchains
+  ```
+
+- Windows configuration: Add the HDC tool directory to the system PATH environment variable
+
+### 3. Android 7.0+ or HarmonyOS Device with `Developer Mode` and `USB Debugging` Enabled
 
 1. Enable Developer Mode: The typical method is to find `Settings > About Phone > Build Number` and tap it rapidly about 10 times until a popup shows "Developer mode has been enabled." This may vary slightly between phones; search online for tutorials if you can't find it.
 2. Enable USB Debugging: After enabling Developer Mode, go to `Settings > Developer Options > USB Debugging` and enable it
@@ -53,10 +82,14 @@ Python 3.10 or higher is recommended.
 
 ![Permissions](resources/screenshot-20251210-120416.png)
 
-### 4. Install ADB Keyboard (for Text Input)
+### 4. Install ADB Keyboard (Required for Android Devices Only, for Text Input)
+
+**Note: HarmonyOS devices use native input methods and do not require ADB Keyboard.**
+
+If you are using an Android device:
 
 Download the [installation package](https://github.com/senzhk/ADBKeyBoard/blob/master/ADBKeyboard.apk) and install it on the corresponding Android device.
-Note: After installation, you need to enable `ADB Keyboard` in `Settings > Input Method` or `Settings > Keyboard List` for it to work.
+Note: After installation, you need to enable `ADB Keyboard` in `Settings > Input Method` or `Settings > Keyboard List` for it to work.(or use command `adb shell ime enable com.android.adbkeyboard/.AdbIME`[How-to-use](https://github.com/senzhk/ADBKeyBoard/blob/master/README.md#how-to-use))
 
 ## Deployment Preparation
 
@@ -67,7 +100,9 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-### 2. Configure ADB
+### 2. Configure ADB or HDC
+
+#### For Android Devices
 
 Make sure your **USB cable supports data transfer**, not just charging.
 
@@ -82,7 +117,65 @@ adb devices
 # emulator-5554   device
 ```
 
+#### For HarmonyOS Devices
+
+Make sure your **USB cable supports data transfer**, not just charging.
+
+Ensure HDC is installed and connect the device via **USB cable**:
+
+```bash
+# Check connected devices
+hdc list targets
+
+# Output should show your device, e.g.:
+# 7001005458323933328a01bce01c2500
+```
+
 ### 3. Start Model Service
+
+You can choose to deploy the model service yourself or use a third-party model service provider.
+
+#### Option A: Use Third-Party Model Services
+
+If you don't want to deploy the model yourself, you can use the following third-party services that have already deployed our model:
+
+**1. z.ai**
+
+- Documentation: https://docs.z.ai/api-reference/introduction
+- `--base-url`: `https://api.z.ai/api/paas/v4`
+- `--model`: `autoglm-phone-multilingual`
+- `--apikey`: Apply for your own API key on the z.ai platform
+
+**2. Novita AI**
+
+- Documentation: https://novita.ai/models/model-detail/zai-org-autoglm-phone-9b-multilingual
+- `--base-url`: `https://api.novita.ai/openai`
+- `--model`: `zai-org/autoglm-phone-9b-multilingual`
+- `--apikey`: Apply for your own API key on the Novita AI platform
+
+**3. Parasail**
+
+- Documentation: https://www.saas.parasail.io/serverless?name=auto-glm-9b-multilingual
+- `--base-url`: `https://api.parasail.io/v1`
+- `--model`: `parasail-auto-glm-9b-multilingual`
+- `--apikey`: Apply for your own API key on the Parasail platform
+
+Example usage with third-party services:
+
+```bash
+# Using z.ai
+python main.py --base-url https://api.z.ai/api/paas/v4 --model "autoglm-phone-multilingual" --apikey "your-z-ai-api-key" "Open Chrome browser"
+
+# Using Novita AI
+python main.py --base-url https://api.novita.ai/openai --model "zai-org/autoglm-phone-9b-multilingual" --apikey "your-novita-api-key" "Open Chrome browser"
+
+# Using Parasail
+python main.py --base-url https://api.parasail.io/v1 --model "parasail-auto-glm-9b-multilingual" --apikey "your-parasail-api-key" "Open Chrome browser"
+```
+
+#### Option B: Deploy Model Yourself
+
+If you prefer to deploy the model locally or on your own server:
 
 1. Download the model and install the inference engine framework according to the `For Model Deployment` section in `requirements.txt`.
 2. Start via SGlang / vLLM to get an OpenAI-format service. Here's a vLLM deployment solution; please strictly follow the startup parameters we provide:
@@ -107,6 +200,26 @@ python3 -m vllm.entrypoints.openai.api_server \
 
 - After successful startup, the model service will be accessible at `http://localhost:8000/v1`. If you deploy the model on a remote server, access it using that server's IP address.
 
+### 4. Check Model Deployment
+
+After starting the model service, you can use the following command to verify the deployment:
+
+```bash
+python scripts/check_deployment_en.py --base-url http://localhost:8000/v1 --model autoglm-phone-9b-multilingual
+```
+
+If using a third-party model service:
+
+```bash
+# Novita AI
+python scripts/check_deployment_en.py --base-url https://api.novita.ai/openai --model zai-org/autoglm-phone-9b-multilingual --apikey your-novita-api-key
+
+# Parasail
+python scripts/check_deployment_en.py --base-url https://api.parasail.io/v1 --model parasail-auto-glm-9b-multilingual --apikey your-parasail-api-key
+```
+
+Upon successful execution, the script will display the model's inference result and token statistics, helping you confirm whether the model deployment is working correctly.
+
 ## Using AutoGLM
 
 ### Command Line
@@ -114,11 +227,17 @@ python3 -m vllm.entrypoints.openai.api_server \
 Set the `--base-url` and `--model` parameters according to your deployed model. For example:
 
 ```bash
-# Interactive mode
+# Android device - Interactive mode
 python main.py --base-url http://localhost:8000/v1 --model "autoglm-phone-9b-multilingual"
 
-# Specify model endpoint
+# Android device - Specify task
 python main.py --base-url http://localhost:8000/v1 "Open Maps and search for nearby coffee shops"
+
+# HarmonyOS device - Interactive mode
+python main.py --device-type hdc --base-url http://localhost:8000/v1 --model "autoglm-phone-9b-multilingual"
+
+# HarmonyOS device - Specify task
+python main.py --device-type hdc --base-url http://localhost:8000/v1 "Open Maps and search for nearby coffee shops"
 
 # Use API key for authentication
 python main.py --apikey sk-xxxxx
@@ -126,8 +245,11 @@ python main.py --apikey sk-xxxxx
 # Use English system prompt
 python main.py --lang en --base-url http://localhost:8000/v1 "Open Chrome browser"
 
-# List supported apps
+# List supported apps (Android)
 python main.py --list-apps
+
+# List supported apps (HarmonyOS)
+python main.py --device-type hdc --list-apps
 ```
 
 ### Python API
@@ -152,28 +274,46 @@ print(result)
 
 ## Remote Debugging
 
-Phone Agent supports remote ADB debugging via WiFi/network, allowing device control without a USB connection.
+Phone Agent supports remote ADB/HDC debugging via WiFi/network, allowing device control without a USB connection.
 
 ### Configure Remote Debugging
 
 #### Enable Wireless Debugging on Phone
 
+##### Android Devices
+
 Ensure the phone and computer are on the same WiFi network, as shown below:
 
 ![Enable Wireless Debugging](resources/screenshot-20251210-120630.png)
 
-#### Use Standard ADB Commands on Computer
+##### HarmonyOS Devices
+
+Ensure the phone and computer are on the same WiFi network:
+1. Go to `Settings > System & Updates > Developer Options`
+2. Enable `USB Debugging` and `Wireless Debugging`
+3. Note the displayed IP address and port number
+
+#### Use Standard ADB/HDC Commands on Computer
 
 ```bash
-# Connect via WiFi, replace with the IP address and port shown on your phone
+# Android device - Connect via WiFi, replace with the IP address and port shown on your phone
 adb connect 192.168.1.100:5555
 
 # Verify connection
 adb devices
 # Should show: 192.168.1.100:5555    device
+
+# HarmonyOS device - Connect via WiFi
+hdc tconn 192.168.1.100:5555
+
+# Verify connection
+hdc list targets
+# Should show: 192.168.1.100:5555
 ```
 
 ### Device Management Commands
+
+#### Android Devices (ADB)
 
 ```bash
 # List all connected devices
@@ -189,7 +329,25 @@ adb disconnect 192.168.1.100:5555
 python main.py --device-id 192.168.1.100:5555 --base-url http://localhost:8000/v1 --model "autoglm-phone-9b-multilingual" "Open TikTok and browse videos"
 ```
 
+#### HarmonyOS Devices (HDC)
+
+```bash
+# List all connected devices
+hdc list targets
+
+# Connect to remote device
+hdc tconn 192.168.1.100:5555
+
+# Disconnect specific device
+hdc tdisconn 192.168.1.100:5555
+
+# Execute task on specific device
+python main.py --device-type hdc --device-id 192.168.1.100:5555 --base-url http://localhost:8000/v1 --model "autoglm-phone-9b-multilingual" "Open TikTok and browse videos"
+```
+
 ### Python API Remote Connection
+
+#### Android Devices (ADB)
 
 ```python
 from phone_agent.adb import ADBConnection, list_devices
@@ -210,6 +368,27 @@ for device in devices:
 success, message = conn.enable_tcpip(5555)
 ip = conn.get_device_ip()
 print(f"Device IP: {ip}")
+
+# Disconnect
+conn.disconnect("192.168.1.100:5555")
+```
+
+#### HarmonyOS Devices (HDC)
+
+```python
+from phone_agent.hdc import HDCConnection, list_devices
+
+# Create connection manager
+conn = HDCConnection()
+
+# Connect to remote device
+success, message = conn.connect("192.168.1.100:5555")
+print(f"Connection status: {message}")
+
+# List connected devices
+devices = list_devices()
+for device in devices:
+    print(f"{device.device_id} - {device.connection_type.value}")
 
 # Disconnect
 conn.disconnect("192.168.1.100:5555")
@@ -246,14 +425,15 @@ You can directly modify the corresponding config files to enhance model capabili
 
 ### Environment Variables
 
-| Variable                  | Description               | Default Value              |
-|---------------------------|---------------------------|----------------------------|
-| `PHONE_AGENT_BASE_URL`    | Model API URL             | `http://localhost:8000/v1` |
-| `PHONE_AGENT_MODEL`       | Model name                | `autoglm-phone-9b`         |
-| `PHONE_AGENT_API_KEY`     | API key for authentication| `EMPTY`                    |
-| `PHONE_AGENT_MAX_STEPS`   | Maximum steps per task    | `100`                      |
-| `PHONE_AGENT_DEVICE_ID`   | ADB device ID             | (auto-detect)              |
-| `PHONE_AGENT_LANG`        | Language (`cn` or `en`)   | `en`                       |
+| Variable                    | Description               | Default Value              |
+|-----------------------------|---------------------------|----------------------------|
+| `PHONE_AGENT_BASE_URL`      | Model API URL             | `http://localhost:8000/v1` |
+| `PHONE_AGENT_MODEL`         | Model name                | `autoglm-phone-9b`         |
+| `PHONE_AGENT_API_KEY`       | API key for authentication| `EMPTY`                    |
+| `PHONE_AGENT_MAX_STEPS`     | Maximum steps per task    | `100`                      |
+| `PHONE_AGENT_DEVICE_ID`     | ADB/HDC device ID         | (auto-detect)              |
+| `PHONE_AGENT_DEVICE_TYPE`   | Device type (`adb` or `hdc`)| `adb`                    |
+| `PHONE_AGENT_LANG`          | Language (`cn` or `en`)   | `en`                       |
 
 ### Model Configuration
 
@@ -325,6 +505,8 @@ This allows you to clearly see the AI's reasoning process and specific operation
 
 ## Supported Apps
 
+### Android Apps
+
 Phone Agent supports 50+ mainstream Chinese applications:
 
 | Category                 | Apps                                                                                   |
@@ -336,6 +518,25 @@ Phone Agent supports 50+ mainstream Chinese applications:
 | Travel & Navigation      | GoogleMaps, Booking.com, Trip.com, Expedia, OpenTracks                                 |
 
 Run `python main.py --list-apps` to see the complete list.
+
+### HarmonyOS Apps
+
+Phone Agent supports 60+ HarmonyOS native apps and system apps:
+
+| Category                 | Apps                                                                                   |
+|--------------------------|----------------------------------------------------------------------------------------|
+| Social & Messaging       | WeChat, QQ, Weibo, Feishu, Enterprise WeChat                                          |
+| E-commerce & Shopping    | Taobao, JD.com, Pinduoduo, Vipshop, Dewu, Xianyu                                      |
+| Food & Delivery          | Meituan, Meituan Waimai, Dianping, Haidilao                                           |
+| Travel & Navigation      | 12306, Didi, Tongcheng, Amap, Baidu Maps                                              |
+| Video & Entertainment    | Bilibili, Douyin, Kuaishou, Tencent Video, iQIYI, Mango TV                            |
+| Music & Audio            | QQ Music, Qishui Music, Ximalaya                                                       |
+| Lifestyle & Social       | Xiaohongshu, Zhihu, Toutiao, 58.com, China Mobile                                     |
+| AI & Tools               | Doubao, WPS, UC Browser, CamScanner, Meitu                                            |
+| System Apps              | Browser, Calendar, Camera, Clock, Cloud, File Manager, Gallery, Contacts, SMS, Settings |
+| Huawei Services          | AppGallery, Music, Video, Books, Themes, Weather                                       |
+
+Run `python main.py --device-type hdc --list-apps` to see the complete list.
 
 ## Available Actions
 
@@ -596,8 +797,41 @@ pip install -e .
 #### Phase 3: Configure Model Service
 
 **If user chooses Option A (using already-deployed model):**
-- Use the URL provided by the user directly
-- Skip local model deployment steps
+
+You can use the following third-party model services:
+
+1. **z.ai**
+   - Documentation: https://docs.z.ai/api-reference/introduction
+   - `--base-url`: `https://api.z.ai/api/paas/v4`
+   - `--model`: `autoglm-phone-multilingual`
+   - `--apikey`: Apply for your own API key on the z.ai platform
+
+2. **Novita AI**
+   - Documentation: https://novita.ai/models/model-detail/zai-org-autoglm-phone-9b-multilingual
+   - `--base-url`: `https://api.novita.ai/openai`
+   - `--model`: `zai-org/autoglm-phone-9b-multilingual`
+   - `--apikey`: Apply for your own API key on the Novita AI platform
+
+3. **Parasail**
+   - Documentation: https://www.saas.parasail.io/serverless?name=auto-glm-9b-multilingual
+   - `--base-url`: `https://api.parasail.io/v1`
+   - `--model`: `parasail-auto-glm-9b-multilingual`
+   - `--apikey`: Apply for your own API key on the Parasail platform
+
+Example usage:
+
+```bash
+# Using z.ai
+python main.py --base-url https://api.z.ai/api/paas/v4 --model "autoglm-phone-multilingual" --apikey "your-z-ai-api-key" "Open Chrome browser"
+
+# Using Novita AI
+python main.py --base-url https://api.novita.ai/openai --model "zai-org/autoglm-phone-9b-multilingual" --apikey "your-novita-api-key" "Open Chrome browser"
+
+# Using Parasail
+python main.py --base-url https://api.parasail.io/v1 --model "parasail-auto-glm-9b-multilingual" --apikey "your-parasail-api-key" "Open Chrome browser"
+```
+
+Or use the URL provided by the user directly and skip local model deployment steps.
 
 **If user chooses Option B (deploy model locally):**
 
