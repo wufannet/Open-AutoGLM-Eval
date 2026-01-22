@@ -58,6 +58,8 @@ def tap(
     subprocess.run(
         adb_prefix + ["shell", "input", "tap", str(x), str(y)], capture_output=True
     )
+    adb_command =  adb_prefix + ["shell", "input", "tap", str(x), str(y)]
+    print(f"device tap ADB command: {' '.join(adb_command)}")
     time.sleep(delay)
 
 
@@ -223,11 +225,12 @@ def launch_app(
         delay = TIMING_CONFIG.device.default_launch_delay
 
     if app_name not in APP_PACKAGES:
+        print(f"没有找到匹配的 app name '{app_name}' not found.")
         return False
 
     adb_prefix = _get_adb_prefix(device_id)
     package = APP_PACKAGES[app_name]
-
+    print(f"找到 app name '{app_name}' found. Launching '{package}'.")
     subprocess.run(
         adb_prefix
         + [
