@@ -22,7 +22,7 @@ class Screenshot:
     is_sensitive: bool = False
 
 
-def get_screenshot(device_id: str | None = None, timeout: int = 10) -> Screenshot:
+def get_screenshot(device_id: str | None = None, timeout: int = 10,local_image_dir: str = "") -> Screenshot:
     """
     Capture a screenshot from the connected Android device.
 
@@ -37,7 +37,14 @@ def get_screenshot(device_id: str | None = None, timeout: int = 10) -> Screensho
         If the screenshot fails (e.g., on sensitive screens like payment pages),
         a black fallback image is returned with is_sensitive=True.
     """
-    temp_path = os.path.join(tempfile.gettempdir(), f"screenshot_{uuid.uuid4()}.png")
+    # if local_image_dir == "":
+    #     temp_path = os.path.join(tempfile.gettempdir(), f"screenshot_{uuid.uuid4()}.png")
+    # else:
+    #     temp_path = local_image_dir
+    temp_path = local_image_dir
+
+
+
     adb_prefix = _get_adb_prefix(device_id)
 
     try:
@@ -61,6 +68,7 @@ def get_screenshot(device_id: str | None = None, timeout: int = 10) -> Screensho
             text=True,
             timeout=5,
         )
+        print(f"get_screenshot to temp_path {temp_path}")
 
         if not os.path.exists(temp_path):
             return _create_fallback_screenshot(is_sensitive=False)
@@ -73,8 +81,8 @@ def get_screenshot(device_id: str | None = None, timeout: int = 10) -> Screensho
         img.save(buffered, format="PNG")
         base64_data = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-        # Cleanup
-        os.remove(temp_path)
+        # Cleanup 不清理要持久化
+        # os.remove(temp_path)
 
         return Screenshot(
             base64_data=base64_data, width=width, height=height, is_sensitive=False

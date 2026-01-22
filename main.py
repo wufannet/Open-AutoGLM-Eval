@@ -32,7 +32,7 @@ from phone_agent.device_factory import DeviceType, get_device_factory, set_devic
 from phone_agent.model import ModelConfig
 from phone_agent.xctest import XCTestConnection
 from phone_agent.xctest import list_devices as list_ios_devices
-
+from datetime import datetime
 
 def check_system_requirements(
     device_type: DeviceType = DeviceType.ADB, wda_url: str = "http://localhost:8100"
@@ -520,7 +520,7 @@ Examples:
         type=str,
         help="Task to execute (interactive mode if not provided)",
     )
-
+    parser.add_argument("--log_name", type=str, default="")
     return parser.parse_args()
 
 
@@ -684,6 +684,10 @@ def handle_device_commands(args) -> bool:
 def main():
     """Main entry point."""
     args = parse_args()
+    image_save_path = args.log_name
+    print(f"image_save_path: {image_save_path}...")
+    if not os.path.exists(image_save_path):
+        os.mkdir(image_save_path)
 
     # Set device type globally based on args
     if args.device_type == "adb":
@@ -820,7 +824,7 @@ def main():
     # Run with provided task or enter interactive mode
     if args.task:
         print(f"\nTask: {args.task}\n")
-        result = agent.run(args.task)
+        result = agent.run(args.task,image_save_path)
         print(f"\nResult: {result}")
     else:
         # Interactive mode
@@ -850,4 +854,14 @@ def main():
 
 
 if __name__ == "__main__":
+    # 程序开始时间
+    program_start_time = datetime.now()
+    print("总程序开始时间：")
+    print(program_start_time.strftime("%Y-%m-%d %H:%M:%S"))
     main()
+    program_end_time = datetime.now()
+    duration = program_end_time - program_start_time
+    print(f"总程序开始时间: {program_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"总程序结束时间: {program_end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"总程序运行耗时: {duration}")
+    print(f"总程序运行耗时秒: {duration.total_seconds():.1f} 秒")

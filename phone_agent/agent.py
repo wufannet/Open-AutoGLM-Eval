@@ -11,6 +11,9 @@ from phone_agent.config import get_messages, get_system_prompt
 from phone_agent.device_factory import get_device_factory
 from phone_agent.model import ModelClient, ModelConfig
 from phone_agent.model.client import MessageBuilder
+from datetime import datetime
+import os
+import uuid
 
 
 @dataclass
@@ -81,7 +84,7 @@ class PhoneAgent:
         self._context: list[dict[str, Any]] = []
         self._step_count = 0
 
-    def run(self, task: str) -> str:
+    def run(self, task: str,image_save_path: str) -> str:
         """
         Run the agent to complete a task.
 
@@ -95,14 +98,14 @@ class PhoneAgent:
         self._step_count = 0
 
         # First step with user prompt
-        result = self._execute_step(task, is_first=True)
+        result = self._execute_step(task, is_first=True,image_save_path=image_save_path)
 
         if result.finished:
             return result.message or "Task completed"
 
         # Continue until finished or max steps reached
         while self._step_count < self.agent_config.max_steps:
-            result = self._execute_step(is_first=False)
+            result = self._execute_step(is_first=False,image_save_path=image_save_path)
 
             if result.finished:
                 return result.message or "Task completed"
@@ -134,14 +137,18 @@ class PhoneAgent:
         self._step_count = 0
 
     def _execute_step(
-        self, user_prompt: str | None = None, is_first: bool = False
+        self, user_prompt: str | None = None, is_first: bool = False,image_save_path: str = ""
     ) -> StepResult:
         """Execute a single step of the agent loop."""
         self._step_count += 1
 
         # Capture current screen state
         device_factory = get_device_factory()
-        screenshot = device_factory.get_screenshot(self.agent_config.device_id)
+        current_time = datetime.now()
+        formatted_time = current_time.strftime(
+            f'%Y-%m-%d-{current_time.hour * 3600 + current_time.minute * 60 + current_time.second}-{str(uuid.uuid4().hex[:8])}')
+        local_image_dir = os.path.join(image_save_path, f"screenshot_{formatted_time}_{self._step_count}.png")
+        screenshot = device_factory.get_screenshot(self.agent_config.device_id,10,local_image_dir=local_image_dir)
         current_app = device_factory.get_current_app(self.agent_config.device_id)
 
         # Build messages
@@ -189,7 +196,7 @@ class PhoneAgent:
         # Parse action from response
         try:
             # print(f"Response: {response} Response end")
-            print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}")
+            # print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}")
             action = parse_action(response.action)
         except ValueError:
             if self.agent_config.verbose:
