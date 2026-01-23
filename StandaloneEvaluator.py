@@ -114,15 +114,15 @@ class StandaloneEvaluator:
             rows += f"""
             <tr>
                 <td>{r['dir']}</td>
+                <td>
+                    <a href="{relative_img_path}" target="_blank">
+                        <img src="{relative_img_path}" width="300" onerror="this.alt='图片不可用';this.style.background='#eee';">
+                    </a>
+                </td>
                 <td style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
                 <td>{r['category']}</td>
                 <td>{r['duration']:.1f}s</td>
                 <td>{r['steps']}</td>
-                <td>
-                    <a href="{relative_img_path}" target="_blank">
-                        <img src="{relative_img_path}" width="200" onerror="this.alt='图片不可用';this.style.background='#eee';">
-                    </a>
-                </td>
             </tr>"""
 
         html = f"""
@@ -156,7 +156,7 @@ class StandaloneEvaluator:
                 </div>
                 <table>
                     <thead>
-                        <tr><th>任务目录</th><th>状态</th><th>失败分类</th><th>耗时</th><th>步数</th><th>截图</th></tr>
+                        <tr><th>任务目录</th><th>截图</th><th>状态</th><th>失败分类</th><th>耗时</th><th>步数</th></tr>
                     </thead>
                     <tbody>{rows}</tbody>
                 </table>
