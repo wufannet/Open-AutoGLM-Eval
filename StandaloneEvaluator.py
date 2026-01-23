@@ -53,7 +53,7 @@ class StandaloneEvaluator:
 
     def mock_llm_classify(self, img_path):
         """模拟调用 LLM 的分类逻辑"""
-        time.sleep(1)  # 模拟 API 耗时
+        time.sleep(0.5)  # 模拟 API 耗时
         import random
         return random.choice(["成功", "UI阻断", "搜索无结果", "定位偏差"])
 
@@ -73,11 +73,15 @@ class StandaloneEvaluator:
             is_success = data.get("result_type") == 1
             category = "成功" if is_success else self.mock_llm_classify(data.get("final_img"))
 
+            # 新增：获取步数 step_count
+            step_count = data.get("step_count", 0)
+
             res = {
                 "dir": dir_name,
                 "status": "Success" if is_success else "Failed",
                 "category": category,
                 "duration": float(data.get("program_duration_seconds", 0)),
+                "steps": int(step_count),
                 "img": data.get("final_img", ""),
                 "eval_at": datetime.now().strftime("%H:%M:%S")
             }
@@ -86,7 +90,7 @@ class StandaloneEvaluator:
                 self.state["results"].append(res)
                 self.state["processed_dirs"].append(dir_name)
 
-            # 每处理完一个就存一次盘，确保安全
+            # 每处理完一个就存一次盘，并刷新报告
             self._save_state()
             self.generate_html()
             print(f" ✅ 已评估: {dir_name}")
@@ -95,39 +99,42 @@ class StandaloneEvaluator:
             print(f" ❌ 评估出错 {dir_name}: {e}")
 
     def generate_html(self):
-        """生成 HTML 报告：修正路径并增加平均耗时统计"""
+        """生成 HTML 报告：包含成功率、平均耗时、平均步数"""
         results = self.state["results"]
         total = len(results)
+        if total == 0: return
 
         # 统计逻辑
         successes = [r for r in results if r['status'] == "Success"]
-        success_rate = (len(successes) / total * 100) if total > 0 else 0
+        success_rate = (len(successes) / total * 100)
 
-        # 你的要求：所有运行耗时相加除以任务数 (Total Task Count)
         all_durations = sum([r.get('duration', 0) for r in results])
-        avg_total_time = all_durations / total if total > 0 else 0
+        avg_total_time = all_durations / total
+
+        # 新增：步数统计
+        all_steps = sum([r.get('steps', 0) for r in results])
+        avg_steps = all_steps / total
 
         # 构造表格行
         rows = ""
-        for r in results:
-            # 关键：路径处理。
-            # r['img'] 里的路径通常是 './logs_eval/...'
-            # 我们需要去掉开头的 './'，然后前面加 '../'
-            # 这样路径就会变成 '../logs_eval/...'
-            raw_img_path = r['img']
-            if raw_img_path.startswith('./'):
-                clean_img_path = raw_img_path[2:]  # 去掉前两个字符 './'
-            else:
-                clean_img_path = raw_img_path
+        report_dir_abs = os.path.dirname(os.path.abspath(self.html_file))
 
-            relative_img_path = f"../{clean_img_path}"
+        for r in results:
+            # 路径安全处理：自动计算相对于报告文件的路径
+            raw_img_path = r['img']
+            try:
+                img_abs_path = os.path.abspath(raw_img_path)
+                relative_img_path = os.path.relpath(img_abs_path, report_dir_abs)
+            except:
+                relative_img_path = raw_img_path
 
             rows += f"""
             <tr>
                 <td>{r['dir']}</td>
                 <td style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
                 <td>{r['category']}</td>
-                <td>{r['duration']}s</td>
+                <td>{r['duration']:.1f}s</td>
+                <td>{r.get('steps', 0)}</td>
                 <td>
                     <a href="{relative_img_path}" target="_blank">
                         <img src="{relative_img_path}" width="250" onerror="this.alt='图片加载失败';this.style.background='#eee';">
@@ -146,24 +153,34 @@ class StandaloneEvaluator:
                 .container {{ background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
                 .stat-box {{ display: flex; gap: 20px; margin-bottom: 20px; }}
                 .stat-item {{ background: #e7f3ff; padding: 15px; border-radius: 8px; flex: 1; text-align: center; }}
-                table {{ border-collapse: collapse; width: 100%; }}
+                .stat-value {{ font-size: 20px; font-weight: bold; margin-top: 5px; color: #007bff; }}
+                table {{ border-collapse: collapse; width: 100%; margin-top: 10px; }}
                 th, td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
                 th {{ background-color: #007bff; color: white; }}
                 tr:hover {{ background-color: #f1f1f1; }}
+                img {{ border-radius: 4px; border: 1px solid #ccc; }}
             </style>
         </head>
         <body>
             <div class="container">
                 <h1>📊 自动化评估报告</h1>
-                <p><b>UUID:</b> {self.run_uuid}</p>
+                <p><b>UUID:</b> {self.run_uuid} | <b>生成时间:</b> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
                 <div class="stat-box">
-                    <div class="stat-item"><b>总任务数:</b><br>{total}</div>
-                    <div class="stat-item"><b>成功率:</b><br><span style="color:green">{success_rate:.1f}%</span></div>
-                    <div class="stat-item"><b>全任务平均耗时:</b><br><span style="color:blue">{avg_total_time:.2f}s</span></div>
+                    <div class="stat-item"><b>总任务数</b><div class="stat-value">{total}</div></div>
+                    <div class="stat-item"><b>成功率</b><div class="stat-value" style="color:green">{success_rate:.1f}%</div></div>
+                    <div class="stat-item"><b>平均耗时</b><div class="stat-value">{avg_total_time:.1f}s</div></div>
+                    <div class="stat-item"><b>平均步数</b><div class="stat-value">{avg_steps:.1f}</div></div>
                 </div>
                 <table>
                     <thead>
-                        <tr><th>任务目录</th><th>执行状态</th><th>失败分类</th><th>运行耗时</th><th>结果截图 (点击放大)</th></tr>
+                        <tr>
+                            <th>任务目录</th>
+                            <th>状态</th>
+                            <th>失败分类</th>
+                            <th>运行耗时</th>
+                            <th>步数</th>
+                            <th>结果截图 (点击放大)</th>
+                        </tr>
                     </thead>
                     <tbody>
                         {rows}
@@ -178,7 +195,11 @@ class StandaloneEvaluator:
 
     def run(self):
         """扫描并开始并行评估"""
-        all_dirs = [d for d in os.listdir(self.log_root) if os.path.isdir(os.path.join(self.log_root, d))]
+        if not os.path.exists(self.log_root):
+            print(f"❌ 错误：日志根目录不存在 -> {self.log_root}")
+            return
+
+        all_dirs = sorted([d for d in os.listdir(self.log_root) if os.path.isdir(os.path.join(self.log_root, d))])
 
         # 核心过滤逻辑：只处理没记录在状态文件中的目录
         to_process = [d for d in all_dirs if d not in self.state["processed_dirs"]]
@@ -192,7 +213,7 @@ class StandaloneEvaluator:
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             executor.map(self.process_task, to_process)
 
-        print(f"\n📊 评估任务完成！报告见: {self.html_file}")
+        print(f"\n📊 评估全部完成！报告见: {self.html_file}")
 
 
 if __name__ == "__main__":
