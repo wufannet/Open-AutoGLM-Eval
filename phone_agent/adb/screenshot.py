@@ -20,6 +20,9 @@ class Screenshot:
     width: int
     height: int
     is_sensitive: bool = False
+    img: str = ""
+
+
 
 
 def get_screenshot(device_id: str | None = None, timeout: int = 10,local_image_dir: str = "") -> Screenshot:
@@ -85,7 +88,7 @@ def get_screenshot(device_id: str | None = None, timeout: int = 10,local_image_d
         # os.remove(temp_path)
 
         return Screenshot(
-            base64_data=base64_data, width=width, height=height, is_sensitive=False
+            base64_data=base64_data, width=width, height=height, is_sensitive=False,img=temp_path
         )
 
     except Exception as e:

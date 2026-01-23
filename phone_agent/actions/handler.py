@@ -127,6 +127,18 @@ class ActionHandler:
             return ActionResult(True, False)
         return ActionResult(False, False, f"App not found: {app_name}")
 
+    def handle_stop(self, action: dict, width: int, height: int) -> ActionResult:
+        """Handle app launch action."""
+        app_name = action.get("app")
+        if not app_name:
+            return ActionResult(False, False, "No app name specified")
+
+        device_factory = get_device_factory()
+        success = device_factory.stop_app(app_name, self.device_id)
+        if success:
+            return ActionResult(True, False)
+        return ActionResult(False, False, f"App not found: {app_name}")
+
     def _handle_tap(self, action: dict, width: int, height: int) -> ActionResult:
         """Handle tap action."""
         element = action.get("element")

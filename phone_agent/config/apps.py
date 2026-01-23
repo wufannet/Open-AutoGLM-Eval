@@ -32,6 +32,7 @@ APP_PACKAGES: dict[str, str] = {
     "去哪儿": "com.Qunar",
     "去哪儿旅行": "com.Qunar",
     "滴滴出行": "com.sdu.didi.psnger",
+    "滴滴": "com.sdu.didi.psnger",
     # Video & Entertainment
     "bilibili": "tv.danmaku.bili",
     "抖音": "com.ss.android.ugc.aweme",

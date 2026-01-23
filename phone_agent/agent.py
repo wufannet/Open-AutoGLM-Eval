@@ -20,7 +20,7 @@ import uuid
 class AgentConfig:
     """Configuration for the PhoneAgent."""
 
-    max_steps: int = 100
+    max_steps: int = 15
     device_id: str | None = None
     lang: str = "cn"
     system_prompt: str | None = None
@@ -40,6 +40,7 @@ class StepResult:
     action: dict[str, Any] | None
     thinking: str
     message: str | None = None
+    img: str=""
 
 
 class PhoneAgent:
@@ -84,6 +85,7 @@ class PhoneAgent:
         self._context: list[dict[str, Any]] = []
         self._step_count = 0
 
+
     def run(self, task: str,image_save_path: str) -> str:
         """
         Run the agent to complete a task.
@@ -96,21 +98,58 @@ class PhoneAgent:
         """
         self._context = []
         self._step_count = 0
+        # 记录自动化评估需要的数据
+        program_start_time = datetime.now()
+        hit_step_limit = False
+        result_type = 0 #0初始化,1成功
 
-        # First step with user prompt
-        result = self._execute_step(task, is_first=True,image_save_path=image_save_path)
-
-        if result.finished:
-            return result.message or "Task completed"
-
-        # Continue until finished or max steps reached
-        while self._step_count < self.agent_config.max_steps:
-            result = self._execute_step(is_first=False,image_save_path=image_save_path)
+        try:
+            # First step with user prompt
+            result = self._execute_step(task, is_first=True, image_save_path=image_save_path)
 
             if result.finished:
+                result_type = 1
                 return result.message or "Task completed"
 
-        return "Max steps reached"
+            # Continue until finished or max steps reached
+            while self._step_count < self.agent_config.max_steps:
+                result = self._execute_step(is_first=False, image_save_path=image_save_path)
+
+                if result.finished:
+                    result_type = 1
+                    return result.message or "Task completed"
+            hit_step_limit = True
+            return "Max steps reached"
+
+        finally:
+            # 记录自动化评估需要的数据
+            program_end_time = datetime.now()
+            duration = program_end_time - program_start_time
+            print(f"程序开始时间: {program_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"程序结束时间: {program_end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"程序运行耗时: {duration}")
+            print(f"程序运行耗时秒: {duration.total_seconds():.1f} 秒")
+            task_result_path = os.path.join(image_save_path, "task_result.json") #和截图一样使用传入路径
+
+            task_result_data = {
+                "task": task,
+                "hit_step_limit": hit_step_limit,
+                "program_start_time": program_start_time.strftime('%Y-%m-%d %H:%M:%S'),
+                "program_end_time": program_end_time.strftime('%Y-%m-%d %H:%M:%S'),
+                # "program_duration": {str(duration)[:-5]},
+                "program_duration_seconds":  f"{duration.total_seconds():.1f}",
+                "result_type": result_type, #0初始化,1成功
+                "final_img": result.img if result else "",  #最后的截图
+                "max_steps": self.agent_config.max_steps,  #最后的截图
+                "step_count": self._step_count,  #最后的截图
+            }
+
+            with open(task_result_path, 'w', encoding='utf-8') as json_file:
+                json.dump(task_result_data, json_file, ensure_ascii=False, indent=4)
+
+
+
+
 
     def step(self, task: str | None = None) -> StepResult:
         """
@@ -178,8 +217,8 @@ class PhoneAgent:
         # Get model response
         try:
             msgs = get_messages(self.agent_config.lang)
-            print("\n" + "=" * 50)
-            print(f"💭 {msgs['thinking']}:")
+            print("\n" + "=" * 50) #--------------------------------------------------
+            print(f"💭 {msgs['thinking']}:") #💭 思考过程:
             print("-" * 50)
             response = self.model_client.request(self._context)
         except Exception as e:
@@ -205,8 +244,8 @@ class PhoneAgent:
 
         if self.agent_config.verbose:
             # Print thinking process
-            print("-" * 50)
-            print(f"🎯 {msgs['action']}:")
+            print("-" * 50) #--------------------------------------------------
+            print(f"🎯 {msgs['action']}:") #🎯 执行动作:
             print(json.dumps(action, ensure_ascii=False, indent=2))
             print("=" * 50 + "\n")
 
@@ -249,6 +288,7 @@ class PhoneAgent:
             action=action,
             thinking=response.thinking,
             message=result.message or action.get("message"),
+            img=local_image_dir,
         )
 
     @property

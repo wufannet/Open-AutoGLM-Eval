@@ -257,6 +257,47 @@ def launch_app(
     time.sleep(delay)
     return True
 
+def stop_app(
+    app_name: str, device_id: str | None = None, delay: float | None = None
+) -> bool:
+    """
+    Launch an app by name.
+
+    Args:
+        app_name: The app name (must be in APP_PACKAGES).
+        device_id: Optional ADB device ID.
+        delay: Delay in seconds after launching. If None, uses configured default.
+
+    Returns:
+        True if app was launched, False if app not found.
+    """
+    tag = "stop_app "
+    if delay is None:
+        delay = TIMING_CONFIG.device.default_launch_delay
+
+    if app_name not in APP_PACKAGES:
+        print(f"{tag}没有找到匹配的 app name '{app_name}' not found.")
+        return False
+
+    adb_prefix = _get_adb_prefix(device_id)
+    package = APP_PACKAGES[app_name]
+    print(f"{tag}找到 app name '{app_name}' found. stop_app '{package}'.")
+    # adb shell am force-stop <包名>
+    adb_command = adb_prefix+ [
+            "shell",
+            "am",
+            "force-stop",
+            package,
+        ]
+    subprocess.run(
+        adb_command,
+        capture_output=True,
+    )
+
+    print(f"stop_app ADB command: {' '.join(adb_command)}")
+    # time.sleep(delay)
+    return True
+
 
 def _get_adb_prefix(device_id: str | None) -> list:
     """Get ADB command prefix with optional device specifier."""

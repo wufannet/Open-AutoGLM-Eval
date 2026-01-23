@@ -33,6 +33,7 @@ from phone_agent.model import ModelConfig
 from phone_agent.xctest import XCTestConnection
 from phone_agent.xctest import list_devices as list_ios_devices
 from datetime import datetime
+from phone_agent.config.apps import APP_PACKAGES
 
 def check_system_requirements(
     device_type: DeviceType = DeviceType.ADB, wda_url: str = "http://localhost:8100"
@@ -521,6 +522,14 @@ Examples:
         help="Task to execute (interactive mode if not provided)",
     )
     parser.add_argument("--log_name", type=str, default="")
+    parser.add_argument("--app", type=str, default="") #评估清理环境,关闭应用包名
+    parser.add_argument(
+        "--eval",
+        type=int,
+        default=0,
+        help="",
+    )
+
     return parser.parse_args()
 
 
@@ -689,6 +698,17 @@ def main():
     if not os.path.exists(image_save_path):
         os.mkdir(image_save_path)
 
+    # 自动化评估清理环境,先简单支持安卓
+    is_stop_app = stop_app(args.app,args.device_id)
+    if not is_stop_app:
+        print("error return is_stop_app false")
+        return
+    else:
+        print("is_stop_app true")
+        return
+
+
+
     # Set device type globally based on args
     if args.device_type == "adb":
         device_type = DeviceType.ADB
@@ -852,6 +872,50 @@ def main():
             except Exception as e:
                 print(f"\nError: {e}\n")
 
+def _get_adb_prefix(device_id: str | None) -> list:
+    """Get ADB command prefix with optional device specifier."""
+    if device_id:
+        return ["adb", "-s", device_id]
+    return ["adb"]
+
+def stop_app(
+    app_name: str, device_id: str | None = None, delay: float | None = None
+) -> bool:
+    """
+    Launch an app by name.
+
+    Args:
+        app_name: The app name (must be in APP_PACKAGES).
+        device_id: Optional ADB device ID.
+        delay: Delay in seconds after launching. If None, uses configured default.
+
+    Returns:
+        True if app was launched, False if app not found.
+    """
+    tag = "stop_app "
+
+    if app_name not in APP_PACKAGES:
+        print(f"{tag}没有找到匹配的 app name '{app_name}' not found.")
+        return False
+
+    adb_prefix = _get_adb_prefix(device_id)
+    package = APP_PACKAGES[app_name]
+    print(f"{tag}找到 app name '{app_name}' found. stop_app '{package}'.")
+    # adb shell am force-stop <包名>
+    adb_command = adb_prefix+ [
+            "shell",
+            "am",
+            "force-stop",
+            package,
+        ]
+    subprocess.run(
+        adb_command,
+        capture_output=True,
+    )
+
+    print(f"stop_app ADB command: {' '.join(adb_command)}")
+    # time.sleep(delay)
+    return True
 
 if __name__ == "__main__":
     # 程序开始时间
@@ -863,5 +927,5 @@ if __name__ == "__main__":
     duration = program_end_time - program_start_time
     print(f"总程序开始时间: {program_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"总程序结束时间: {program_end_time.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"总程序运行耗时: {duration}")
+    print(f"总程序运行耗时: {str(duration)[:-5]}") #时分秒格式
     print(f"总程序运行耗时秒: {duration.total_seconds():.1f} 秒")

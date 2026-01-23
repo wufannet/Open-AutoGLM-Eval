@@ -13,6 +13,7 @@ from phone_agent.adb.device import (
     get_current_app,
     home,
     launch_app,
+    stop_app,
     long_press,
     swipe,
     tap,
@@ -42,6 +43,7 @@ __all__ = [
     "double_tap",
     "long_press",
     "launch_app",
+    "stop_app",
     # Connection management
     "ADBConnection",
     "DeviceInfo",
