@@ -8,7 +8,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 # ==================== 配置区 ====================
-LOGS_ROOT = "./logs_eval/20260123_1610_滴滴_详细步骤_v4"  # 原始任务运行日志根目录
+LOGS_ROOT = "./logs_eval/20260123_1728_滴滴_详细步骤_v4"  # 原始任务运行日志根目录
 EVAL_STORE = "./logs_eval_reports"  # 存放评估状态和报告的目录
 MAX_WORKERS = 10  # 并行评估线程数
 
@@ -17,15 +17,25 @@ MAX_WORKERS = 10  # 并行评估线程数
 
 class StandaloneEvaluator:
     def __init__(self, run_uuid=None):
-        self.log_root = LOGS_ROOT
+        self.log_root = LOGS_ROOT.rstrip('/')  # 移除末尾斜杠以正确提取目录名
         self.store_path = EVAL_STORE
         if not os.path.exists(self.store_path):
             os.makedirs(self.store_path)
 
-        # 1. 初始化 UUID 和 状态文件
+        # 1. 提取 LOGS_ROOT 的最后一级目录名
+        self.root_dir_name = os.path.basename(self.log_root)
+
+        # 2. 获取程序开始运行的时间
+        self.start_run_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # 3. 确定 UUID (如果传入则延用)
         self.run_uuid = run_uuid if run_uuid else str(uuid.uuid4())[:8]
-        self.state_file = os.path.join(self.store_path, f"eval_state_{self.run_uuid}.json")
-        self.html_file = os.path.join(self.store_path, f"report_{self.run_uuid}.html")
+
+        # 4. 构造符合要求的文件名格式
+        # 格式: 目录名_运行时间_类型_uuid
+        base_filename = f"{self.root_dir_name}_{self.start_run_time}"
+        self.state_file = os.path.join(self.store_path, f"{base_filename}_eval_state_{self.run_uuid}.json")
+        self.html_file = os.path.join(self.store_path, f"{base_filename}_report_{self.run_uuid}.html")
 
         self.state = self._load_state()
         self.lock = threading.Lock()
@@ -37,23 +47,26 @@ class StandaloneEvaluator:
             with open(self.state_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         else:
-            print(f"🆕 开启全新评估任务，UUID: {self.run_uuid}")
+            print(f"🆕 开启全新评估任务")
+            print(f"📂 目标目录: {self.root_dir_name}")
+            print(f"🆔 UUID: {self.run_uuid}")
             return {
                 "uuid": self.run_uuid,
-                "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "processed_dirs": [],  # 记录已处理的文件夹名
+                "start_time": self.start_run_time,
+                "root_dir": self.root_dir_name,
+                "processed_dirs": [],
                 "results": []
             }
 
     def _save_state(self):
-        """持久化状态，防止中断"""
+        """持久化状态"""
         with self.lock:
             with open(self.state_file, 'w', encoding='utf-8') as f:
                 json.dump(self.state, f, ensure_ascii=False, indent=4)
 
     def mock_llm_classify(self, img_path):
         """模拟调用 LLM 的分类逻辑"""
-        time.sleep(0.5)  # 模拟 API 耗时
+        time.sleep(0.3)
         import random
         return random.choice(["成功", "UI阻断", "搜索无结果", "定位偏差"])
 
@@ -69,11 +82,8 @@ class StandaloneEvaluator:
             with open(result_json, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
-            # 模拟评估过程
             is_success = data.get("result_type") == 1
             category = "成功" if is_success else self.mock_llm_classify(data.get("final_img"))
-
-            # 新增：获取步数 step_count
             step_count = data.get("step_count", 0)
 
             res = {
@@ -90,7 +100,6 @@ class StandaloneEvaluator:
                 self.state["results"].append(res)
                 self.state["processed_dirs"].append(dir_name)
 
-            # 每处理完一个就存一次盘，并刷新报告
             self._save_state()
             self.generate_html()
             print(f" ✅ 已评估: {dir_name}")
@@ -99,34 +108,26 @@ class StandaloneEvaluator:
             print(f" ❌ 评估出错 {dir_name}: {e}")
 
     def generate_html(self):
-        """生成 HTML 报告：包含成功率、平均耗时、平均步数"""
+        """生成 HTML 报告"""
         results = self.state["results"]
         total = len(results)
         if total == 0: return
 
         # 统计逻辑
-        successes = [r for r in results if r['status'] == "Success"]
+        successes = [r for r in results if r['status'] == 'Success']
         success_rate = (len(successes) / total * 100)
+        avg_total_time = sum([r.get('duration', 0) for r in results]) / total
+        avg_steps = sum([r.get('steps', 0) for r in results]) / total
 
-        all_durations = sum([r.get('duration', 0) for r in results])
-        avg_total_time = all_durations / total
-
-        # 新增：步数统计
-        all_steps = sum([r.get('steps', 0) for r in results])
-        avg_steps = all_steps / total
-
-        # 构造表格行
+        # 表格行
         rows = ""
         report_dir_abs = os.path.dirname(os.path.abspath(self.html_file))
-
         for r in results:
-            # 路径安全处理：自动计算相对于报告文件的路径
-            raw_img_path = r['img']
             try:
-                img_abs_path = os.path.abspath(raw_img_path)
+                img_abs_path = os.path.abspath(r['img'])
                 relative_img_path = os.path.relpath(img_abs_path, report_dir_abs)
             except:
-                relative_img_path = raw_img_path
+                relative_img_path = r['img']
 
             rows += f"""
             <tr>
@@ -137,7 +138,7 @@ class StandaloneEvaluator:
                 <td>{r.get('steps', 0)}</td>
                 <td>
                     <a href="{relative_img_path}" target="_blank">
-                        <img src="{relative_img_path}" width="250" onerror="this.alt='图片加载失败';this.style.background='#eee';">
+                        <img src="{relative_img_path}" width="200" onerror="this.alt='图片不可用';this.style.background='#eee';">
                     </a>
                 </td>
             </tr>"""
@@ -147,7 +148,7 @@ class StandaloneEvaluator:
         <html lang="zh-CN">
         <head>
             <meta charset="UTF-8">
-            <title>评估报告 - {self.run_uuid}</title>
+            <title>评估报告 - {self.root_dir_name}</title>
             <style>
                 body {{ font-family: "Microsoft YaHei", sans-serif; padding: 20px; background: #f5f5f5; }}
                 .container {{ background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
@@ -158,13 +159,13 @@ class StandaloneEvaluator:
                 th, td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
                 th {{ background-color: #007bff; color: white; }}
                 tr:hover {{ background-color: #f1f1f1; }}
-                img {{ border-radius: 4px; border: 1px solid #ccc; }}
             </style>
         </head>
         <body>
             <div class="container">
                 <h1>📊 自动化评估报告</h1>
-                <p><b>UUID:</b> {self.run_uuid} | <b>生成时间:</b> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+                <p><b>源数据:</b> {self.root_dir_name}</p>
+                <p><b>运行时间:</b> {self.start_run_time} | <b>UUID:</b> {self.run_uuid}</p>
                 <div class="stat-box">
                     <div class="stat-item"><b>总任务数</b><div class="stat-value">{total}</div></div>
                     <div class="stat-item"><b>成功率</b><div class="stat-value" style="color:green">{success_rate:.1f}%</div></div>
@@ -173,18 +174,9 @@ class StandaloneEvaluator:
                 </div>
                 <table>
                     <thead>
-                        <tr>
-                            <th>任务目录</th>
-                            <th>状态</th>
-                            <th>失败分类</th>
-                            <th>运行耗时</th>
-                            <th>步数</th>
-                            <th>结果截图 (点击放大)</th>
-                        </tr>
+                        <tr><th>任务目录</th><th>状态</th><th>失败分类</th><th>耗时</th><th>步数</th><th>截图</th></tr>
                     </thead>
-                    <tbody>
-                        {rows}
-                    </tbody>
+                    <tbody>{rows}</tbody>
                 </table>
             </div>
         </body>
@@ -196,29 +188,26 @@ class StandaloneEvaluator:
     def run(self):
         """扫描并开始并行评估"""
         if not os.path.exists(self.log_root):
-            print(f"❌ 错误：日志根目录不存在 -> {self.log_root}")
+            print(f"❌ 错误：LOGS_ROOT 路径不存在: {self.log_root}")
             return
 
         all_dirs = sorted([d for d in os.listdir(self.log_root) if os.path.isdir(os.path.join(self.log_root, d))])
-
-        # 核心过滤逻辑：只处理没记录在状态文件中的目录
         to_process = [d for d in all_dirs if d not in self.state["processed_dirs"]]
 
         if not to_process:
-            print("🙌 所有目录已评估完毕，无需操作。")
+            print("🙌 目录已处理完毕。")
             return
 
-        print(f"🚀 准备评估 {len(to_process)} 个新任务...")
-
+        print(f"🚀 准备评估 {len(to_process)} 个新文件夹...")
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             executor.map(self.process_task, to_process)
 
-        print(f"\n📊 评估全部完成！报告见: {self.html_file}")
+        print(f"\n📊 评估完成！\n报告: {self.html_file}\n状态: {self.state_file}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--uuid", type=str, help="传入上次的 UUID 以恢复评估")
+    parser.add_argument("--uuid", type=str, help="传入 UUID 以恢复运行")
     args = parser.parse_args()
 
     evaluator = StandaloneEvaluator(run_uuid=args.uuid)
