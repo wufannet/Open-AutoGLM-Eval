@@ -701,11 +701,11 @@ def main():
     # 自动化评估清理环境,先简单支持安卓
     is_stop_app = stop_app(args.app,args.device_id)
     if not is_stop_app:
-        print("error return is_stop_app false")
+        print("reset env error return is_stop_app false")
         return
     else:
-        print("is_stop_app true")
-        return
+        print("reset env succeed is_stop_app true")
+        # return
 
 
 
