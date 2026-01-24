@@ -71,6 +71,11 @@ class ActionHandler:
             )
 
         action_name = action.get("action")
+        # 安全防护检查打车呼叫错误
+        # if action_name == "Tap":
+
+
+
         handler_method = self._get_handler(action_name)
 
         if handler_method is None:
@@ -141,11 +146,28 @@ class ActionHandler:
 
     def _handle_tap(self, action: dict, width: int, height: int) -> ActionResult:
         """Handle tap action."""
+        # {
+        #   "_metadata": "do",
+        #   "action": "Tap",
+        #   "element": [
+        #     756,
+        #     946
+        #   ]
+        # }
         element = action.get("element")
         if not element:
             return ActionResult(False, False, "No element coordinates")
 
         x, y = self._convert_relative_to_absolute(element, width, height)
+
+        abs_x, abs_y = element[0] , element[1]
+        # check ride place order
+        if abs_x > 500 and abs_y > 850:
+            return ActionResult(
+                success=False,
+                should_finish=True,
+                message="User cancelled sensitive operation 打车呼叫错误 ",
+            )
 
         # Check for sensitive operation
         if "message" in action:
