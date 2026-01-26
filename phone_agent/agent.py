@@ -123,7 +123,8 @@ class PhoneAgent:
                     if result.success:
                         result_type = 1
                     return result.message or "Task completed"
-            hit_step_limit = True
+            hit_step_limit = True #任务结果只有 2 种,成功和失败,失败有 2 种情况,发送错误或者达到最大步骤
+            # print(f"\nResult: Max steps reached")
             return "Max steps reached"
 
         finally:
@@ -143,7 +144,7 @@ class PhoneAgent:
                 "program_end_time": program_end_time.strftime('%Y-%m-%d %H:%M:%S'),
                 # "program_duration": {str(duration)[:-5]},
                 "program_duration_seconds":  f"{duration.total_seconds():.1f}",
-                "success": result.success and result.finished,
+                "success": result.success and result.finished, #finish和成功才算任务完成
                 "result_type": result_type, #0初始化,1成功,2,错误失败
                 "final_img": result.img if result else "",  #最后的截图
                 "max_steps": self.agent_config.max_steps,  #最后的截图
