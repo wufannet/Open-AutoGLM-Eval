@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from phone_agent.actions import ActionHandler
-from phone_agent.actions.handler import do, finish, parse_action
+from phone_agent.actions.handler import do, finish, parse_action, ActionResult
 from phone_agent.config import get_messages, get_system_prompt
 from phone_agent.device_factory import get_device_factory
 from phone_agent.model import ModelClient, ModelConfig
@@ -21,6 +21,7 @@ class AgentConfig:
     """Configuration for the PhoneAgent."""
 
     max_steps: int = 15
+    max_parse_action_error: int =3 #Failed to parse action retry next step
     device_id: str | None = None
     lang: str = "cn"
     system_prompt: str | None = None
@@ -84,6 +85,8 @@ class PhoneAgent:
 
         self._context: list[dict[str, Any]] = []
         self._step_count = 0
+        self._parse_action_error_count = 0
+        self._error_log:  list[dict[str, Any]] = []
 
 
     def run(self, task: str,image_save_path: str) -> str:
@@ -108,7 +111,8 @@ class PhoneAgent:
             result = self._execute_step(task, is_first=True, image_save_path=image_save_path)
 
             if result.finished:
-                result_type = 1
+                if result.success:
+                    result_type = 1
                 return result.message or "Task completed"
 
             # Continue until finished or max steps reached
@@ -116,7 +120,8 @@ class PhoneAgent:
                 result = self._execute_step(is_first=False, image_save_path=image_save_path)
 
                 if result.finished:
-                    result_type = 1
+                    if result.success:
+                        result_type = 1
                     return result.message or "Task completed"
             hit_step_limit = True
             return "Max steps reached"
@@ -138,10 +143,13 @@ class PhoneAgent:
                 "program_end_time": program_end_time.strftime('%Y-%m-%d %H:%M:%S'),
                 # "program_duration": {str(duration)[:-5]},
                 "program_duration_seconds":  f"{duration.total_seconds():.1f}",
-                "result_type": result_type, #0初始化,1成功
+                "success": result.success and result.finished,
+                "result_type": result_type, #0初始化,1成功,2,错误失败
                 "final_img": result.img if result else "",  #最后的截图
                 "max_steps": self.agent_config.max_steps,  #最后的截图
                 "step_count": self._step_count,  #最后的截图
+                "have_error":len(self._error_log) > 0, #发生过错误
+                "error_log": self._error_log,
             }
 
             with open(task_result_path, 'w', encoding='utf-8') as json_file:
@@ -232,44 +240,72 @@ class PhoneAgent:
                 message=f"Model error: {e}",
             )
 
+
+        # Remove image from context to save space 移动到前面保证执行
+        self._context[-1] = MessageBuilder.remove_images_from_message(self._context[-1])
+
+        parse_action_ok = True
         # Parse action from response
         try:
             # print(f"Response:\n{response}\nResponse end")
             print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
             action = parse_action(response.action)
+            self._parse_action_error_count = 0
+            if self.agent_config.verbose: #解析成功才打印
+                # Print thinking process
+                print("-" * 50)  # --------------------------------------------------
+                print(f"🎯 {msgs['action']}:")  # 🎯 执行动作:
+                print(json.dumps(action, ensure_ascii=False, indent=2))
+                print("=" * 50 + "\n")
         except ValueError:
             if self.agent_config.verbose:
                 traceback.print_exc()
-            action = finish(message=response.action)
+            # 解析错误
+            parse_action_ok = False
+            self._parse_action_error_count += 1
+            parse_action_error_log =f"parse_action_error response.action {response.action}"
+            self._error_log.append({"type": "parse_action_error", "text": parse_action_error_log})
+            if self._parse_action_error_count > self.agent_config.max_parse_action_error:
+                action = finish(message=parse_action_error_log)  # 解析错误生成一个空message的 finish.
 
-        if self.agent_config.verbose:
-            # Print thinking process
-            print("-" * 50) #--------------------------------------------------
-            print(f"🎯 {msgs['action']}:") #🎯 执行动作:
-            print(json.dumps(action, ensure_ascii=False, indent=2))
-            print("=" * 50 + "\n")
 
-        # Remove image from context to save space
-        self._context[-1] = MessageBuilder.remove_images_from_message(self._context[-1])
+
+
+
+
+
+
 
         # Execute action
-        try:
-            result = self.action_handler.execute(
-                action, screenshot.width, screenshot.height
+        if parse_action_ok or self._parse_action_error_count > self.agent_config.max_parse_action_error: #解析成功,或者错误大于 3 次
+            #1.执行action
+            try:
+                result = self.action_handler.execute(
+                    action, screenshot.width, screenshot.height
+                )
+            except Exception as e:
+                if self.agent_config.verbose:
+                    traceback.print_exc()
+                result = self.action_handler.execute(
+                    finish(message=str(e)), screenshot.width, screenshot.height
+                )
+                result.success = False #执行报错不成功
+                # Add assistant response to context # 模型方法都 think和 action会使用解析后的添加进上下文发送到下一次
+            #2.添加响应到上下文
+            self._context.append(
+                MessageBuilder.create_assistant_message(
+                    f"<think>{response.thinking}</think><answer>{response.action}</answer>"
+                )
             )
-        except Exception as e:
-            if self.agent_config.verbose:
-                traceback.print_exc()
-            result = self.action_handler.execute(
-                finish(message=str(e)), screenshot.width, screenshot.height
+            if not parse_action_ok:
+                result.success = False
+        else:
+            result = ActionResult(
+                success=False,
+                should_finish=False,
+                message=parse_action_error_log,
             )
 
-        # Add assistant response to context
-        self._context.append(
-            MessageBuilder.create_assistant_message(
-                f"<think>{response.thinking}</think><answer>{response.action}</answer>"
-            )
-        )
 
         # Check if finished
         finished = action.get("_metadata") == "finish" or result.should_finish
@@ -278,7 +314,7 @@ class PhoneAgent:
             msgs = get_messages(self.agent_config.lang)
             print("\n" + "🎉 " + "=" * 48)
             print(
-                f"✅ {msgs['task_completed']}: {result.message or action.get('message', msgs['done'])}"
+                f"✅ {msgs['task_completed']}: {result.message or action.get('message', msgs['done'])}" #  ✅ 任务完成:
             )
             print("=" * 50 + "\n")
 
@@ -287,7 +323,7 @@ class PhoneAgent:
             finished=finished,
             action=action,
             thinking=response.thinking,
-            message=result.message or action.get("message"),
+            message=result.message or action.get("message"),#正常情况执行结果 result没有 message,除非执行敏感操作错误.
             img=local_image_dir,
         )
 
