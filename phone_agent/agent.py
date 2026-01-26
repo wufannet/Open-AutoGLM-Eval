@@ -196,8 +196,8 @@ class PhoneAgent:
                 MessageBuilder.create_system_message(self.agent_config.system_prompt)
             )
 
-            screen_info = MessageBuilder.build_screen_info(current_app)
-            text_content = f"{user_prompt}\n\n{screen_info}"
+            screen_info = MessageBuilder.build_screen_info(current_app) #JSON string with screen info. 当前一直返回桌面怪不得,如果返回当前应用会更快,打开应用这步不让模型做
+            text_content = f"{user_prompt}\n\n{screen_info}" #user_prompt只第一次请求有,后面通过聊天历史/上下文获得用户提示词和规划.方法的确不同
 
             self._context.append(
                 MessageBuilder.create_user_message(
@@ -218,7 +218,7 @@ class PhoneAgent:
         try:
             msgs = get_messages(self.agent_config.lang)
             print("\n" + "=" * 50) #--------------------------------------------------
-            print(f"💭 {msgs['thinking']}:") #💭 思考过程:
+            print(f"💭 {msgs['thinking']}:") #💭 思考过程: request中会答应思考过程,出错会是空
             print("-" * 50)
             response = self.model_client.request(self._context)
         except Exception as e:
