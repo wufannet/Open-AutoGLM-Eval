@@ -162,6 +162,7 @@ class ActionHandler:
 
         abs_x, abs_y = element[0] , element[1]
         # check ride place order
+        # Parsing action: do(action="Tap", element=[756,946])
         if abs_x > 500 and abs_y > 850:
             return ActionResult(
                 success=False,
