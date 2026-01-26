@@ -234,8 +234,8 @@ class PhoneAgent:
 
         # Parse action from response
         try:
-            # print(f"Response: {response} Response end")
-            # print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}")
+            # print(f"Response:\n{response}\nResponse end")
+            print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
             action = parse_action(response.action)
         except ValueError:
             if self.agent_config.verbose:
