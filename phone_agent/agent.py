@@ -230,6 +230,7 @@ class PhoneAgent:
             print(f"💭 {msgs['thinking']}:") #💭 思考过程: request中会答应思考过程,出错会是空
             print("-" * 50)
             response = self.model_client.request(self._context)
+            print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
         except Exception as e:
             if self.agent_config.verbose:
                 traceback.print_exc()
@@ -241,6 +242,32 @@ class PhoneAgent:
                 message=f"Model error: {e}",
             )
 
+        # 记录模型接口日志
+        message_save_path = image_save_path
+        message_file = os.path.join(image_save_path, f"step_{self._step_count}.json")
+        message_data = {
+            "name": "manager",
+            "messages": self._context,
+            "response": vars(response),
+            "step_id": self._step_count,
+            "total_time": response.total_time,
+            # "prompt_tokens": manager_usage.get("prompt_tokens", 0),
+            # "completion_tokens": manager_usage.get("completion_tokens", 0),
+            # "total_tokens": manager_usage.get("total_tokens", 0),
+            # "prompt_tokens_price": manager_usage.get("prompt_tokens_price", 0.0),
+            # "completion_tokens_price": manager_usage.get("completion_tokens_price", 0.0),
+            # "total_tokens_price": manager_usage.get("total_tokens_price", 0.0),
+        }
+        with open(message_file, 'w', encoding='utf-8') as json_file:
+            json.dump(message_data, json_file, ensure_ascii=False, indent=4)
+
+        # Save prompt and output to manager.log
+        log_file = os.path.join(message_save_path, f"step_{self._step_count}.log")
+        with open(log_file, "w", encoding="utf-8") as f:
+            f.write("=== PROMPT ===\n")
+            f.write(text_content + "\n\n") #无图片提示词方便查看,只有用户提示词
+            f.write("=== OUTPUT ===\n")
+            f.write(response.raw_content) #怎么没有标签,模型并没有按照要求
 
         # Remove image from context to save space 移动到前面保证执行
         self._context[-1] = MessageBuilder.remove_images_from_message(self._context[-1])
@@ -249,7 +276,7 @@ class PhoneAgent:
         # Parse action from response
         try:
             # print(f"Response:\n{response}\nResponse end")
-            print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
+
             action = parse_action(response.action)
             self._parse_action_error_count = 0
             if self.agent_config.verbose: #解析成功才打印

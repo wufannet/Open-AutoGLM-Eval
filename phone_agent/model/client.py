@@ -153,14 +153,14 @@ class ModelClient:
         print("-" * 50)
         if time_to_first_token is not None:
             print(
-                f"{get_message('time_to_first_token', lang)}: {time_to_first_token:.3f}s"
+                f"{get_message('time_to_first_token', lang)}: {time_to_first_token:.3f}s" #首 Token 延迟 (TTFT)
             )
         if time_to_thinking_end is not None:
             print(
-                f"{get_message('time_to_thinking_end', lang)}:        {time_to_thinking_end:.3f}s"
+                f"{get_message('time_to_thinking_end', lang)}:        {time_to_thinking_end:.3f}s" #思考完成延迟
             )
         print(
-            f"{get_message('total_inference_time', lang)}:          {total_time:.3f}s"
+            f"{get_message('total_inference_time', lang)}:          {total_time:.3f}s" #总推理时间
         )
         print("=" * 50)
 
