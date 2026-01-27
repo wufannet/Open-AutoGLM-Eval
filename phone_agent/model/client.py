@@ -78,7 +78,7 @@ class ModelClient:
             extra_body=self.config.extra_body,
             stream=True,
         )
-
+        # print(f"extra_body:\n{self.config.extra_body}\nextra_body end") #{} extra_body目前是空对象
         raw_content = ""
         buffer = ""  # Buffer to hold content that might be part of a marker
         action_markers = ["finish(message=", "do(action="]
