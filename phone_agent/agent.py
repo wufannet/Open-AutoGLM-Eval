@@ -236,7 +236,7 @@ class PhoneAgent:
                 traceback.print_exc()
             return StepResult(
                 success=False,
-                finished=True,
+                finished=False,
                 action=None,
                 thinking="",
                 message=f"Model error: {e}",
@@ -277,7 +277,7 @@ class PhoneAgent:
         try:
             # print(f"Response:\n{response}\nResponse end")
 
-            action = parse_action(response.action)
+            action = parse_action(response.action) #从 action字符串解析 action对象
             self._parse_action_error_count = 0
             if self.agent_config.verbose: #解析成功才打印
                 # Print thinking process
@@ -285,24 +285,26 @@ class PhoneAgent:
                 print(f"🎯 {msgs['action']}:")  # 🎯 执行动作:
                 print(json.dumps(action, ensure_ascii=False, indent=2))
                 print("=" * 50 + "\n")
-        except ValueError:
+        except ValueError as e:
             if self.agent_config.verbose:
                 traceback.print_exc()
-            # 解析错误
+            # action解析错误
             parse_action_ok = False
             self._parse_action_error_count += 1
             parse_action_error_log =f"parse_action_error response.action {response.action}"
             self._error_log.append({"type": "parse_action_error", "text": parse_action_error_log})
             if self._parse_action_error_count > self.agent_config.max_parse_action_error:
+                #超过3次直接标记完成
                 action = finish(message=parse_action_error_log)  # 解析错误生成一个空message的 finish.
-
-
-
-
-
-
-
-
+            else:
+                #不超过3次继续执行下一次 step
+                return StepResult(
+                    success=False,
+                    finished=False,
+                    action=None,
+                    thinking="",
+                    message=f"parse_action_error: {e}",
+                )
 
         # Execute action
         if parse_action_ok or self._parse_action_error_count > self.agent_config.max_parse_action_error: #解析成功,或者错误大于 3 次
@@ -335,7 +337,7 @@ class PhoneAgent:
             )
 
 
-        # Check if finished
+        # Check if finished 3.答应完成
         finished = action.get("_metadata") == "finish" or result.should_finish
 
         if finished and self.agent_config.verbose:
@@ -351,7 +353,7 @@ class PhoneAgent:
             finished=finished,
             action=action,
             thinking=response.thinking,
-            message=result.message or action.get("message"),#正常情况执行结果 result没有 message,除非执行敏感操作错误.
+            message=result.message or action.get("message"),#正常情况执行结果 result没有message,除非执行敏感操作错误.
             img=local_image_dir,
         )
 
