@@ -20,6 +20,7 @@ class ModelConfig:
     max_tokens: int = 3000
     temperature: float = 0.0
     top_p: float = 0.85
+    # top_k: float = 1
     frequency_penalty: float = 0.2
     extra_body: dict[str, Any] = field(default_factory=dict)
     lang: str = "cn"  # Language for UI messages: 'cn' or 'en'
@@ -73,7 +74,7 @@ class ModelClient:
             model=self.config.model_name,
             max_tokens=self.config.max_tokens,
             temperature=self.config.temperature,
-            top_p=self.config.top_p,
+            # top_p=self.config.top_p,
             frequency_penalty=self.config.frequency_penalty,
             extra_body=self.config.extra_body,
             stream=True,
