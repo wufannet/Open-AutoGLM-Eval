@@ -427,7 +427,7 @@ Examples:
     parser.add_argument(
         "--max-steps",
         type=int,
-        default=int(os.getenv("PHONE_AGENT_MAX_STEPS", "100")),
+        default=int(os.getenv("PHONE_AGENT_MAX_STEPS", "15")),
         help="Maximum steps per task",
     )
 
