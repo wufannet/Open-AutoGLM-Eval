@@ -131,7 +131,7 @@ class StandaloneEvaluator:
                 </td>
                 <td>
                     <a href="{relative_img_path}" target="_blank">
-                        <img src="{relative_img_path}" width="280" onerror="this.alt='无图';this.style.background='#eee';">
+                        <img src="{relative_img_path}" width="250" onerror="this.alt='无图';this.style.background='#eee';">
                     </a>
                 </td>
                 <td style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
