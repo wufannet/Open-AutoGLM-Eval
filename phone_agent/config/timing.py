@@ -46,7 +46,7 @@ class DeviceTimingConfig:
     default_swipe_delay: float = 1.0  # Default delay after swipe
     default_back_delay: float = 1.0  # Default delay after back button
     default_home_delay: float = 1.0  # Default delay after home button
-    default_launch_delay: float = 1.0  # Default delay after launching app
+    default_launch_delay: float = 5.0  # Default delay after launching app
 
     def __post_init__(self):
         """Load values from environment variables if present."""
