@@ -80,11 +80,8 @@ class BatchAgentRunner:
         # prompt = f"1.打开滴滴\n2. 点击您想去哪儿\n3. 输入{destination}\n4. 点击最匹配的选项\n5. 在最终页面看到终点地址正确,看到报价以及看到底部的呼叫按钮代表任务完成请执行完成"
         prompt = f"""
         1. 打开滴滴。
-        2. 点击“您想去哪儿”搜索框：
-           - 视觉锚点：识别带有“橙色圆点”的“您想去哪儿？”文本行。
-           - 精准定位：点击文字正中心（约 Y=524 处），严禁向下偏移至功能图标区（Y=600+）。
-           - 错误自检：若进入“预约打车”页面，请立即点击返回键重试。
-        3. 输入“{destination}”。
+        2. 点击“您想去哪儿”搜索框,您想去哪儿的坐标在(327, 522),点击后进入目的地搜索页面,如果是其他页面返回上个页面。
+        3. 在目的地搜索页面输入“{destination}”。
         4. 点击最匹配的选项。
         5. 任务完成判定：确认终点地址正确，看到实时报价及底部的呼叫按钮后，执行完成。
         """
@@ -97,6 +94,7 @@ class BatchAgentRunner:
             "--log_name", log_name,
             "--app", "滴滴",
             "--eval", "1",
+            "--max-steps", "15",
             prompt
         ]
 
@@ -122,7 +120,7 @@ class BatchAgentRunner:
 
 
 if __name__ == "__main__":
-    BASE_LOG_DIR = "./logs_eval/20260124_2152_滴滴_检查防护_v4"
+    BASE_LOG_DIR = "./logs_eval/20260127_2028_滴滴_解决预约异常_v7_5"
     RUN_COUNT = 50
     runner = BatchAgentRunner()
     runner.start()
