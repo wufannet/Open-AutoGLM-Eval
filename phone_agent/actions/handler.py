@@ -43,7 +43,7 @@ class ActionHandler:
         self.takeover_callback = takeover_callback or self._default_takeover
 
     def execute(
-        self, action: dict[str, Any], screen_width: int, screen_height: int
+        self, action: dict[str, Any], screen_width: int, screen_height: int, step_count: int
     ) -> ActionResult:
         """
         Execute an action from the AI model.
@@ -86,7 +86,7 @@ class ActionHandler:
             )
 
         try:
-            return handler_method(action, screen_width, screen_height)
+            return handler_method(action, screen_width, screen_height, step_count)
         except Exception as e:
             return ActionResult(
                 success=False, should_finish=False, message=f"Action failed: {e}"
@@ -120,7 +120,7 @@ class ActionHandler:
         y = int(element[1] / 1000 * screen_height)
         return x, y
 
-    def _handle_launch(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_launch(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle app launch action."""
         app_name = action.get("app")
         if not app_name:
@@ -144,7 +144,7 @@ class ActionHandler:
             return ActionResult(True, False)
         return ActionResult(False, False, f"App not found: {app_name}")
 
-    def _handle_tap(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_tap(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle tap action."""
         # {
         #   "_metadata": "do",
@@ -163,7 +163,8 @@ class ActionHandler:
         abs_x, abs_y = element[0] , element[1]
         # check ride place order
         # Parsing action: do(action="Tap", element=[756,946])
-        if abs_x > 500 and abs_y > 850:
+
+        if abs_x > 500 and abs_y > 850 and step_count > 2: #解决首页广告错误判断打车错误. 步数要大于 2
             return ActionResult(
                 success=False,
                 should_finish=True,
@@ -183,7 +184,7 @@ class ActionHandler:
         device_factory.tap(x, y, self.device_id)
         return ActionResult(True, False)
 
-    def _handle_type(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_type(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle text input action."""
         text = action.get("text", "")
 
@@ -207,7 +208,7 @@ class ActionHandler:
 
         return ActionResult(True, False)
 
-    def _handle_swipe(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_swipe(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle swipe action."""
         start = action.get("start")
         end = action.get("end")
@@ -222,19 +223,19 @@ class ActionHandler:
         device_factory.swipe(start_x, start_y, end_x, end_y, device_id=self.device_id)
         return ActionResult(True, False)
 
-    def _handle_back(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_back(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle back button action."""
         device_factory = get_device_factory()
         device_factory.back(self.device_id)
         return ActionResult(True, False)
 
-    def _handle_home(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_home(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle home button action."""
         device_factory = get_device_factory()
         device_factory.home(self.device_id)
         return ActionResult(True, False)
 
-    def _handle_double_tap(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_double_tap(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle double tap action."""
         element = action.get("element")
         if not element:
@@ -245,7 +246,7 @@ class ActionHandler:
         device_factory.double_tap(x, y, self.device_id)
         return ActionResult(True, False)
 
-    def _handle_long_press(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_long_press(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle long press action."""
         element = action.get("element")
         if not element:
@@ -256,7 +257,7 @@ class ActionHandler:
         device_factory.long_press(x, y, device_id=self.device_id)
         return ActionResult(True, False)
 
-    def _handle_wait(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_wait(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle wait action."""
         duration_str = action.get("duration", "1 seconds")
         try:
@@ -267,25 +268,25 @@ class ActionHandler:
         time.sleep(duration)
         return ActionResult(True, False)
 
-    def _handle_takeover(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_takeover(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle takeover request (login, captcha, etc.)."""
         message = action.get("message", "User intervention required")
         self.takeover_callback(message)
         return ActionResult(True, False)
 
-    def _handle_note(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_note(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle note action (placeholder for content recording)."""
         # This action is typically used for recording page content
         # Implementation depends on specific requirements
         return ActionResult(True, False)
 
-    def _handle_call_api(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_call_api(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle API call action (placeholder for summarization)."""
         # This action is typically used for content summarization
         # Implementation depends on specific requirements
         return ActionResult(True, False)
 
-    def _handle_interact(self, action: dict, width: int, height: int) -> ActionResult:
+    def _handle_interact(self, action: dict, width: int, height: int, step_count: int) -> ActionResult:
         """Handle interaction request (user choice needed)."""
         # This action signals that user input is needed
         return ActionResult(True, False, message="User interaction required")

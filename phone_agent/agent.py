@@ -311,13 +311,13 @@ class PhoneAgent:
             #1.执行action
             try:
                 result = self.action_handler.execute(
-                    action, screenshot.width, screenshot.height
+                    action, screenshot.width, screenshot.height, self._step_count
                 )
             except Exception as e:
                 if self.agent_config.verbose:
                     traceback.print_exc()
                 result = self.action_handler.execute(
-                    finish(message=str(e)), screenshot.width, screenshot.height
+                    finish(message=str(e)), screenshot.width, screenshot.height, self._step_count
                 )
                 result.success = False #执行报错不成功
                 # Add assistant response to context # 模型方法都 think和 action会使用解析后的添加进上下文发送到下一次
