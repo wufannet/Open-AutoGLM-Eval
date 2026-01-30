@@ -15,16 +15,14 @@ MAX_WORKERS = 10
 
 
 class StandaloneEvaluator:
-    def __init__(self, logs_root=None, run_uuid=None, time_threshold=50.0, step_threshold=8 ):
+    def __init__(self, logs_root=None, run_uuid=None, time_threshold=50.0, step_threshold=8):
         self.log_root = (logs_root or DEFAULT_LOGS_ROOT).rstrip('/')
         self.store_path = EVAL_STORE
         if not os.path.exists(self.store_path):
             os.makedirs(self.store_path)
 
-        # --- 新增：阈值设置 ---
-        self.time_threshold = time_threshold  # 耗时阈值（秒）
-        self.step_threshold = step_threshold  # 步数阈值
-        # --------------------
+        self.time_threshold = time_threshold
+        self.step_threshold = step_threshold
 
         self.root_dir_name = os.path.basename(self.log_root)
         self.start_run_time = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -111,16 +109,18 @@ class StandaloneEvaluator:
         total = len(results)
         if total == 0: return
 
-        # --- 统计计算 ---
+        # 统计
         successes = [r for r in results if r['status'] == 'Success']
         fails_count = total - len(successes)
         success_rate = (len(successes) / total * 100)
-
         avg_total_time = sum([r.get('duration', 0) for r in results]) / total
         over_time_tasks = [r for r in results if r.get('duration', 0) > self.time_threshold]
-
         avg_steps = sum([r.get('steps', 0) for r in results]) / total
         over_step_tasks = [r for r in results if r.get('steps', 0) > self.step_threshold]
+
+        # 提取所有分类供筛选使用
+        all_categories = sorted(list(set([r['category'] for r in results])))
+        cat_options = "".join([f'<option value="{c}">{c}</option>' for c in all_categories])
 
         rows = ""
         report_dir_abs = os.path.dirname(os.path.abspath(self.html_file))
@@ -131,27 +131,26 @@ class StandaloneEvaluator:
             except:
                 relative_img_path = r['img']
 
-            # 判断是否超过阈值
             is_over_time = r['duration'] > self.time_threshold
             is_over_step = r['steps'] > self.step_threshold
 
+            # data- 属性用于 JS 筛选和排序
             rows += f"""
-            <tr>
-                <td class="copyable" onclick="copyAndNotify(this, '{r['dir']}')" title="点击复制目录名">
-                    <code>{r['dir']}</code>
-                    <span class="status-tip">📋</span>
+            <tr data-status="{r['status']}" data-category="{r['category']}" data-overtime="{'是' if is_over_time else '否'}" data-overstep="{'是' if is_over_step else '否'}">
+                <td class="copyable" onclick="copyAndNotify(this, '{r['dir']}')">
+                    <code>{r['dir']}</code><span class="status-tip">📋</span>
                 </td>
                 <td>
                     <a href="{relative_img_path}" target="_blank">
-                        <img src="{relative_img_path}" width="200" onerror="this.alt='无图';this.style.background='#eee';">
+                        <img src="{relative_img_path}" width="180" onerror="this.alt='无图';this.style.background='#eee';">
                     </a>
                 </td>
-                <td style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
-                <td>{r['category']}</td>
-                <td>{r['duration']:.1f}s</td>
-                <td style="color:{'#d93025' if is_over_time else '#5f6368'};">{'是' if is_over_time else '否'}</td>
-                <td>{r['steps']}</td>
-                <td style="color:{'#d93025' if is_over_step else '#5f6368'};">{'是' if is_over_step else '否'}</td>
+                <td class="cell-status" style="color:{'green' if r['status'] == 'Success' else 'red'};">{r['status']}</td>
+                <td class="cell-category">{r['category']}</td>
+                <td class="cell-duration" data-val="{r['duration']}">{r['duration']:.1f}s</td>
+                <td class="cell-overtime">{'是' if is_over_time else '否'}</td>
+                <td class="cell-steps" data-val="{r['steps']}">{r['steps']}</td>
+                <td class="cell-overstep">{'是' if is_over_step else '否'}</td>
             </tr>"""
 
         html = f"""
@@ -161,72 +160,42 @@ class StandaloneEvaluator:
             <meta charset="UTF-8">
             <title>评估报告 - {self.root_dir_name}</title>
             <style>
-                body {{ font-family: "Segoe UI", system-ui, sans-serif; padding: 20px; background: #f0f2f5; color: #333; }}
-                .container {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); position: relative; }}
-                .stat-box {{ display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }}
-                .stat-item {{ background: #ffffff; border: 1px solid #e1e4e8; padding: 12px; border-radius: 8px; flex: 1; min-width: 120px; text-align: center; }}
-                .stat-label {{ font-size: 13px; color: #666; margin-bottom: 5px; }}
-                .stat-value {{ font-size: 20px; font-weight: bold; color: #1a73e8; }}
+                body {{ font-family: "Segoe UI", sans-serif; padding: 20px; background: #f0f2f5; }}
+                .container {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }}
 
-                table {{ border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; table-layout: fixed; }}
+                /* 统计区域 */
+                .stat-box {{ display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }}
+                .stat-item {{ background: #f8f9fa; border: 1px solid #e1e4e8; padding: 12px; border-radius: 8px; flex: 1; min-width: 120px; text-align: center; }}
+                .stat-label {{ font-size: 12px; color: #666; }}
+                .stat-value {{ font-size: 18px; font-weight: bold; color: #1a73e8; }}
+                .val-fail {{ color: #d93025; }}
+
+                /* 筛选区域 */
+                .filter-bar {{ 
+                    background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+                    display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 13px;
+                }}
+                .filter-group {{ display: flex; align-items: center; gap: 5px; }}
+                select {{ padding: 5px; border-radius: 4px; border: 1px solid #ccc; }}
+
+                /* 表格样式 */
+                table {{ border-collapse: collapse; width: 100%; font-size: 13px; table-layout: fixed; }}
                 th, td {{ border: 1px solid #eef0f2; padding: 10px; text-align: left; word-break: break-all; }}
-                th {{ background-color: #1a73e8; color: white; position: sticky; top: 0; z-index: 10; }}
+                th {{ background-color: #1a73e8; color: white; position: sticky; top: 0; z-index: 10; user-select: none; }}
+                .sortable {{ cursor: pointer; }}
+                .sortable:hover {{ background-color: #1557b0; }}
                 tr:nth-child(even) {{ background-color: #fafafa; }}
                 tr:hover {{ background-color: #f1f7ff; }}
 
-                .copyable {{ cursor: pointer; transition: all 0.2s ease; position: relative; }}
-                .copyable:hover {{ background: #e8f0fe !important; }}
-                .status-tip {{ margin-left: 8px; font-size: 12px; transition: all 0.2s; }}
+                .copyable {{ cursor: pointer; }}
+                .status-tip {{ margin-left: 5px; font-size: 12px; opacity: 0.5; }}
 
-                img {{ border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s; cursor: zoom-in; }}
-                img:hover {{ transform: scale(1.05); }}
-
-                /* 颜色 */
-                .val-success {{ color: #34a853; }}
-                .val-fail {{ color: #d93025; }}
-
-                /* 回到顶部按钮 */
                 #backToTop {{
-                    position: fixed; bottom: 30px; right: 30px; 
-                    width: 50px; height: 50px; background: #1a73e8; color: white;
-                    border: none; border-radius: 50%; cursor: pointer;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: none;
-                    font-size: 20px; z-index: 1000;
+                    position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px;
+                    background: #1a73e8; color: white; border: none; border-radius: 50%;
+                    cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: none; z-index: 100;
                 }}
-                #backToTop:hover {{ background: #1557b0; }}
             </style>
-
-            <script>
-                function copyAndNotify(el, text) {{
-                    navigator.clipboard.writeText(text).then(() => {{
-                        const tip = el.querySelector('.status-tip');
-                        const code = el.querySelector('code');
-                        const oldTip = tip.innerText;
-                        tip.innerText = '✅ 已复制';
-                        tip.style.color = '#34a853';
-                        el.style.backgroundColor = '#e6f4ea';
-                        setTimeout(() => {{
-                            tip.innerText = oldTip;
-                            tip.style.color = '';
-                            el.style.backgroundColor = '';
-                        }}, 1200);
-                    }});
-                }}
-
-                // 回到顶部逻辑
-                window.onscroll = function() {{
-                    const btn = document.getElementById("backToTop");
-                    if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {{
-                        btn.style.display = "block";
-                    }} else {{
-                        btn.style.display = "none";
-                    }}
-                }};
-
-                function scrollToTop() {{
-                    window.scrollTo({{ top: 0, behavior: 'smooth' }});
-                }}
-            </script>
         </head>
         <body>
             <div class="container">
@@ -236,40 +205,125 @@ class StandaloneEvaluator:
                 <div class="stat-box">
                     <div class="stat-item"><div class="stat-label">总任务</div><div class="stat-value">{total}</div></div>
                     <div class="stat-item"><div class="stat-label">失败任务</div><div class="stat-value val-fail">{fails_count}</div></div>
-                    <div class="stat-item"><div class="stat-label">成功率</div><div class="stat-value val-success">{success_rate:.1f}%</div></div>
+                    <div class="stat-item"><div class="stat-label">成功率</div><div class="stat-value">{success_rate:.1f}%</div></div>
                     <div class="stat-item"><div class="stat-label">平均耗时</div><div class="stat-value">{avg_total_time:.1f}s</div></div>
                     <div class="stat-item"><div class="stat-label">耗时过长(>{self.time_threshold}s)</div><div class="stat-value val-fail">{len(over_time_tasks)}</div></div>
                     <div class="stat-item"><div class="stat-label">平均步数</div><div class="stat-value">{avg_steps:.1f}</div></div>
                     <div class="stat-item"><div class="stat-label">步数过多(>{self.step_threshold})</div><div class="stat-value val-fail">{len(over_step_tasks)}</div></div>
                 </div>
 
-                <table>
-                    <colgroup>
-                        <col style="width: 25%;">
-                        <col style="width: 15%;">
-                        <col style="width: 8%;">
-                        <col style="width: 12%;">
-                        <col style="width: 10%;">
-                        <col style="width: 10%;">
-                        <col style="width: 10%;">
-                        <col style="width: 10%;">
-                    </colgroup>
+                <div class="filter-bar">
+                    <strong>🔍 筛选:</strong>
+                    <div class="filter-group">
+                        状态: 
+                        <select id="f_status" onchange="applyFilters()">
+                            <option value="all">全部</option>
+                            <option value="Success">Success</option>
+                            <option value="Failed">Failed</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        分类结果: 
+                        <select id="f_category" onchange="applyFilters()">
+                            <option value="all">全部</option>
+                            {cat_options}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        耗时过长: 
+                        <select id="f_overtime" onchange="applyFilters()">
+                            <option value="all">全部</option>
+                            <option value="是">是</option>
+                            <option value="否">否</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        步数过多: 
+                        <select id="f_overstep" onchange="applyFilters()">
+                            <option value="all">全部</option>
+                            <option value="是">是</option>
+                            <option value="否">否</option>
+                        </select>
+                    </div>
+                    <span style="color:#888; margin-left:10px;">(点击表头耗时/步数可排序)</span>
+                </div>
+
+                <table id="resultTable">
                     <thead>
                         <tr>
-                            <th>任务目录 (点击复制)</th>
-                            <th>最后截图</th>
-                            <th>状态</th>
-                            <th>分类结果</th>
-                            <th>总耗时</th>
-                            <th>耗时过长</th>
-                            <th>总步数</th>
-                            <th>步数过多</th>
+                            <th style="width: 25%;">任务目录</th>
+                            <th style="width: 15%;">最后截图</th>
+                            <th style="width: 8%;">状态</th>
+                            <th style="width: 12%;">分类结果</th>
+                            <th class="sortable" onclick="sortTable(4, 'float')" style="width: 10%;">总耗时 ↕</th>
+                            <th style="width: 10%;">耗时过长</th>
+                            <th class="sortable" onclick="sortTable(6, 'int')" style="width: 10%;">总步数 ↕</th>
+                            <th style="width: 10%;">步数过多</th>
                         </tr>
                     </thead>
-                    <tbody>{rows}</tbody>
+                    <tbody id="tableBody">{rows}</tbody>
                 </table>
             </div>
-            <button id="backToTop" onclick="scrollToTop()" title="回到顶部">↑</button>
+
+            <button id="backToTop" onclick="window.scrollTo({{top: 0, behavior: 'smooth'}})">↑</button>
+
+            <script>
+                // --- 筛选功能 ---
+                function applyFilters() {{
+                    const status = document.getElementById('f_status').value;
+                    const category = document.getElementById('f_category').value;
+                    const overtime = document.getElementById('f_overtime').value;
+                    const overstep = document.getElementById('f_overstep').value;
+
+                    const rows = document.querySelectorAll('#tableBody tr');
+                    rows.forEach(row => {{
+                        const matchStatus = (status === 'all' || row.getAttribute('data-status') === status);
+                        const matchCategory = (category === 'all' || row.getAttribute('data-category') === category);
+                        const matchOvertime = (overtime === 'all' || row.getAttribute('data-overtime') === overtime);
+                        const matchOverstep = (overstep === 'all' || row.getAttribute('data-overstep') === overstep);
+
+                        row.style.display = (matchStatus && matchCategory && matchOvertime && matchOverstep) ? '' : 'none';
+                    }});
+                }}
+
+                // --- 排序功能 ---
+                let sortDirections = {{}};
+                function sortTable(colIdx, type) {{
+                    const tbody = document.getElementById('tableBody');
+                    const rows = Array.from(tbody.rows);
+
+                    // 切换方向
+                    sortDirections[colIdx] = !sortDirections[colIdx];
+                    const dir = sortDirections[colIdx] ? 1 : -1;
+
+                    rows.sort((a, b) => {{
+                        let valA = a.cells[colIdx].getAttribute('data-val') || a.cells[colIdx].innerText;
+                        let valB = b.cells[colIdx].getAttribute('data-val') || b.cells[colIdx].innerText;
+
+                        if (type === 'float' || type === 'int') {{
+                            return (parseFloat(valA) - parseFloat(valB)) * dir;
+                        }}
+                        return valA.localeCompare(valB) * dir;
+                    }});
+
+                    rows.forEach(row => tbody.appendChild(row));
+                }}
+
+                // --- 通用辅助 ---
+                function copyAndNotify(el, text) {{
+                    navigator.clipboard.writeText(text).then(() => {{
+                        const tip = el.querySelector('.status-tip');
+                        const old = tip.innerText;
+                        tip.innerText = '✅';
+                        setTimeout(() => tip.innerText = old, 1000);
+                    }});
+                }}
+
+                window.onscroll = function() {{
+                    const btn = document.getElementById("backToTop");
+                    btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "block" : "none";
+                }};
+            </script>
         </body>
         </html>
         """
@@ -285,7 +339,7 @@ class StandaloneEvaluator:
         to_process = [d for d in all_dirs if d not in self.state["processed_dirs"]]
 
         if not to_process:
-            print("🙌 所有目录已评估完毕，无需重复执行。")
+            print("🙌 所有目录已评估完毕。")
             return
 
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -294,7 +348,7 @@ class StandaloneEvaluator:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--logs_root", type=str, help="指定需要评估的日志根目录")
+    parser.add_argument("--logs_root", type=str)
     parser.add_argument("--uuid", type=str)
     args = parser.parse_args()
 
