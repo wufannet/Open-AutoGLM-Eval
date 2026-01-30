@@ -109,7 +109,7 @@ class StandaloneEvaluator:
         total = len(results)
         if total == 0: return
 
-        # 统计
+        # --- 统计逻辑 ---
         successes = [r for r in results if r['status'] == 'Success']
         fails_count = total - len(successes)
         success_rate = (len(successes) / total * 100)
@@ -118,8 +118,14 @@ class StandaloneEvaluator:
         avg_steps = sum([r.get('steps', 0) for r in results]) / total
         over_step_tasks = [r for r in results if r.get('steps', 0) > self.step_threshold]
 
+        # 统计分类数据用于饼图
+        cat_counts = {}
+        for r in results:
+            cat = r['category']
+            cat_counts[cat] = cat_counts.get(cat, 0) + 1
+
         # 提取所有分类供筛选使用
-        all_categories = sorted(list(set([r['category'] for r in results])))
+        all_categories = sorted(list(cat_counts.keys()))
         cat_options = "".join([f'<option value="{c}">{c}</option>' for c in all_categories])
 
         rows = ""
@@ -141,10 +147,10 @@ class StandaloneEvaluator:
                 </td>
                 <td>
                     <a href="{relative_img_path}" target="_blank">
-                        <img src="{relative_img_path}" width="180" onerror="this.alt='无图';this.style.background='#eee';">
+                        <img src="{relative_img_path}" width="240" onerror="this.alt='无图';this.style.background='#eee';">
                     </a>
                 </td>
-                <td class="cell-status" style="color:{'green' if r['status'] == 'Success' else 'red'};">{r['status']}</td>
+                <td class="cell-status" style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
                 <td class="cell-category">{r['category']}</td>
                 <td class="cell-duration" data-val="{r['duration']}">{r['duration']:.1f}s</td>
                 <td class="cell-overtime">{'是' if is_over_time else '否'}</td>
@@ -158,16 +164,20 @@ class StandaloneEvaluator:
         <head>
             <meta charset="UTF-8">
             <title>评估报告 - {self.root_dir_name}</title>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <style>
-                body {{ font-family: "Segoe UI", sans-serif; padding: 20px; background: #f0f2f5; }}
-                .container {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }}
+                body {{ font-family: "Segoe UI", sans-serif; padding: 20px; background: #f0f2f5; margin: 0; }}
+                .container {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 1600px; margin: auto; }}
 
-                /* 统计区域 */
-                .stat-box {{ display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }}
-                .stat-item {{ background: #f8f9fa; border: 1px solid #e1e4e8; padding: 12px; border-radius: 8px; flex: 1; min-width: 120px; text-align: center; }}
-                .stat-label {{ font-size: 12px; color: #666; }}
-                .stat-value {{ font-size: 18px; font-weight: bold; color: #1a73e8; }}
+                /* 顶部统计和饼图布局 */
+                .top-section {{ display: flex; gap: 20px; margin-bottom: 25px; align-items: flex-start; }}
+                .stat-grid {{ flex: 3; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }}
+                .stat-item {{ background: #f8f9fa; border: 1px solid #e1e4e8; padding: 15px; border-radius: 8px; text-align: center; }}
+                .stat-label {{ font-size: 12px; color: #666; margin-bottom: 5px; }}
+                .stat-value {{ font-size: 20px; font-weight: bold; color: #1a73e8; }}
                 .val-fail {{ color: #d93025; }}
+
+                .chart-container {{ flex: 1; background: #f8f9fa; border: 1px solid #e1e4e8; padding: 15px; border-radius: 8px; max-height: 280px; display: flex; flex-direction: column; align-items: center; }}
 
                 /* 筛选区域 */
                 .filter-bar {{ 
@@ -175,181 +185,172 @@ class StandaloneEvaluator:
                     display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 13px;
                 }}
                 .filter-group {{ display: flex; align-items: center; gap: 5px; }}
-                select {{ padding: 5px; border-radius: 4px; border: 1px solid #ccc; }}
+                select {{ padding: 6px; border-radius: 4px; border: 1px solid #ccc; background: white; }}
 
-                .btn-reset {{
-                    padding: 6px 12px; background: #5f6368; color: white; border: none; 
-                    border-radius: 4px; cursor: pointer; transition: background 0.2s;
-                }}
+                .btn-reset {{ padding: 6px 12px; background: #5f6368; color: white; border: none; border-radius: 4px; cursor: pointer; }}
                 .btn-reset:hover {{ background: #3c4043; }}
 
-                /* 表格样式 */
-                table {{ border-collapse: collapse; width: 100%; font-size: 13px; table-layout: fixed; }}
-                th, td {{ border: 1px solid #eef0f2; padding: 10px; text-align: left; word-break: break-all; }}
-                th {{ background-color: #1a73e8; color: white; position: sticky; top: 0; z-index: 10; user-select: none; }}
-                .sortable {{ cursor: pointer; position: relative; }}
+                /* 表格及固定表头 */
+                .table-wrapper {{ overflow: visible; }}
+                table {{ border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; table-layout: fixed; }}
+
+                /* 关键修复：固定表头所有列 */
+                th {{ 
+                    position: sticky; 
+                    top: 0; 
+                    background-color: #1a73e8; 
+                    color: white; 
+                    z-index: 100; 
+                    padding: 12px 10px;
+                    text-align: left;
+                    border-bottom: 2px solid #1557b0;
+                    user-select: none;
+                }}
+
+                td {{ border-bottom: 1px solid #eef0f2; padding: 12px 10px; word-break: break-all; vertical-align: top; background: white; }}
+
+                .sortable {{ cursor: pointer; }}
                 .sortable:hover {{ background-color: #1557b0; }}
-                .sort-icon {{ font-size: 10px; margin-left: 4px; opacity: 0.8; }}
 
-                tr:nth-child(even) {{ background-color: #fafafa; }}
-                tr:hover {{ background-color: #f1f7ff; }}
+                tr:nth-child(even) td {{ background-color: #fafafa; }}
+                tr:hover td {{ background-color: #f1f7ff; }}
 
-                .copyable {{ cursor: pointer; }}
-                .status-tip {{ margin-left: 5px; font-size: 12px; opacity: 0.5; }}
+                img {{ border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.2s; }}
+                img:hover {{ transform: scale(1.02); }}
+
+                .copyable {{ cursor: pointer; color: #1a73e8; }}
+                .status-tip {{ margin-left: 5px; font-size: 12px; opacity: 0.6; }}
 
                 #backToTop {{
-                    position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px;
+                    position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px;
                     background: #1a73e8; color: white; border: none; border-radius: 50%;
-                    cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: none; z-index: 100;
+                    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none; z-index: 1000;
+                    font-size: 20px;
                 }}
             </style>
         </head>
         <body>
             <div class="container">
                 <h1>📊 自动化评估报告</h1>
-                <p style="color: #666;">项目目录: {self.root_dir_name} | 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                <p style="color: #666; margin-top: -10px;">项目: {self.root_dir_name} | 生成于: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
 
-                <div class="stat-box">
-                    <div class="stat-item"><div class="stat-label">总任务</div><div class="stat-value">{total}</div></div>
-                    <div class="stat-item"><div class="stat-label">失败任务</div><div class="stat-value val-fail">{fails_count}</div></div>
-                    <div class="stat-item"><div class="stat-label">成功率</div><div class="stat-value">{success_rate:.1f}%</div></div>
-                    <div class="stat-item"><div class="stat-label">平均耗时</div><div class="stat-value">{avg_total_time:.1f}s</div></div>
-                    <div class="stat-item"><div class="stat-label">耗时过长(>{self.time_threshold}s)</div><div class="stat-value val-fail">{len(over_time_tasks)}</div></div>
-                    <div class="stat-item"><div class="stat-label">平均步数</div><div class="stat-value">{avg_steps:.1f}</div></div>
-                    <div class="stat-item"><div class="stat-label">步数过多(>{self.step_threshold})</div><div class="stat-value val-fail">{len(over_step_tasks)}</div></div>
+                <div class="top-section">
+                    <div class="stat-grid">
+                        <div class="stat-item"><div class="stat-label">总任务</div><div class="stat-value">{total}</div></div>
+                        <div class="stat-item"><div class="stat-label">失败任务</div><div class="stat-value val-fail">{fails_count}</div></div>
+                        <div class="stat-item"><div class="stat-label">成功率</div><div class="stat-value">{success_rate:.1f}%</div></div>
+                        <div class="stat-item"><div class="stat-label">平均耗时</div><div class="stat-value">{avg_total_time:.1f}s</div></div>
+                        <div class="stat-item"><div class="stat-label">耗时过长</div><div class="stat-value val-fail">{len(over_time_tasks)}</div></div>
+                        <div class="stat-item"><div class="stat-label">平均步数</div><div class="stat-value">{avg_steps:.1f}</div></div>
+                        <div class="stat-item"><div class="stat-label">步数过多</div><div class="stat-value val-fail">{len(over_step_tasks)}</div></div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">分类结果分布</div>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
                 </div>
 
                 <div class="filter-bar">
                     <strong>🔍 筛选:</strong>
-                    <div class="filter-group">
-                        状态: 
-                        <select id="f_status" onchange="applyFilters()">
-                            <option value="all">全部</option>
-                            <option value="Success">Success</option>
-                            <option value="Failed">Failed</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        分类结果: 
-                        <select id="f_category" onchange="applyFilters()">
-                            <option value="all">全部</option>
-                            {cat_options}
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        耗时过长: 
-                        <select id="f_overtime" onchange="applyFilters()">
-                            <option value="all">全部</option>
-                            <option value="是">是</option>
-                            <option value="否">否</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        步数过多: 
-                        <select id="f_overstep" onchange="applyFilters()">
-                            <option value="all">全部</option>
-                            <option value="是">是</option>
-                            <option value="否">否</option>
-                        </select>
-                    </div>
+                    <div class="filter-group">状态: <select id="f_status" onchange="applyFilters()"><option value="all">全部</option><option value="Success">Success</option><option value="Failed">Failed</option></select></div>
+                    <div class="filter-group">分类: <select id="f_category" onchange="applyFilters()"><option value="all">全部</option>{cat_options}</select></div>
+                    <div class="filter-group">耗时过长: <select id="f_overtime" onchange="applyFilters()"><option value="all">全部</option><option value="是">是</option><option value="否">否</option></select></div>
+                    <div class="filter-group">步数过多: <select id="f_overstep" onchange="applyFilters()"><option value="all">全部</option><option value="是">是</option><option value="否">否</option></select></div>
                     <button class="btn-reset" onclick="resetAll()">🔄 重置全部</button>
-                    <span style="color:#888; margin-left:10px;">(点击表头列名可进行排序)</span>
                 </div>
 
-                <table id="resultTable">
-                    <thead>
-                        <tr>
-                            <th class="sortable" onclick="sortTable(0, 'string')" style="width: 25%;">任务目录 <span class="sort-icon">↕</span></th>
-                            <th style="width: 15%;">最后截图</th>
-                            <th style="width: 8%;">状态</th>
-                            <th style="width: 12%;">分类结果</th>
-                            <th class="sortable" onclick="sortTable(4, 'float')" style="width: 10%;">总耗时 <span class="sort-icon">↕</span></th>
-                            <th style="width: 10%;">耗时过长</th>
-                            <th class="sortable" onclick="sortTable(6, 'int')" style="width: 10%;">总步数 <span class="sort-icon">↕</span></th>
-                            <th style="width: 10%;">步数过多</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">{rows}</tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table id="resultTable">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortTable(0, 'string')" style="width: 25%;">任务目录 ↕</th>
+                                <th style="width: 260px;">最后截图</th> <th style="width: 100px;">状态</th>
+                                <th style="width: 120px;">分类结果</th>
+                                <th class="sortable" onclick="sortTable(4, 'float')" style="width: 100px;">总耗时 ↕</th>
+                                <th style="width: 100px;">耗时过长</th>
+                                <th class="sortable" onclick="sortTable(6, 'int')" style="width: 100px;">总步数 ↕</th>
+                                <th style="width: 100px;">步数过多</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">{rows}</tbody>
+                    </table>
+                </div>
             </div>
 
             <button id="backToTop" onclick="window.scrollTo({{top: 0, behavior: 'smooth'}})">↑</button>
 
             <script>
-                // 记录排序状态
+                // --- 饼图初始化 ---
+                const catData = {json.dumps(cat_counts, ensure_ascii=False)};
+                const ctx = document.getElementById('categoryChart').getContext('2d');
+                new Chart(ctx, {{
+                    type: 'pie',
+                    data: {{
+                        labels: Object.keys(catData),
+                        datasets: [{{
+                            data: Object.values(catData),
+                            backgroundColor: ['#34a853', '#ea4335', '#fbbc05', '#4285f4', '#9b59b6', '#34495e'],
+                            borderWidth: 1
+                        }}]
+                    }},
+                    options: {{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {{ legend: {{ position: 'right', labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }} }}
+                    }}
+                }});
+
+                // --- 逻辑功能 ---
                 let sortDirections = {{}};
 
-                // --- 筛选功能 ---
                 function applyFilters() {{
                     const status = document.getElementById('f_status').value;
                     const category = document.getElementById('f_category').value;
                     const overtime = document.getElementById('f_overtime').value;
                     const overstep = document.getElementById('f_overstep').value;
 
-                    const rows = document.querySelectorAll('#tableBody tr');
-                    rows.forEach(row => {{
-                        const matchStatus = (status === 'all' || row.getAttribute('data-status') === status);
-                        const matchCategory = (category === 'all' || row.getAttribute('data-category') === category);
-                        const matchOvertime = (overtime === 'all' || row.getAttribute('data-overtime') === overtime);
-                        const matchOverstep = (overstep === 'all' || row.getAttribute('data-overstep') === overstep);
-
-                        row.style.display = (matchStatus && matchCategory && matchOvertime && matchOverstep) ? '' : 'none';
+                    document.querySelectorAll('#tableBody tr').forEach(row => {{
+                        const mStatus = (status === 'all' || row.getAttribute('data-status') === status);
+                        const mCategory = (category === 'all' || row.getAttribute('data-category') === category);
+                        const mOvertime = (overtime === 'all' || row.getAttribute('data-overtime') === overtime);
+                        const mOverstep = (overstep === 'all' || row.getAttribute('data-overstep') === overstep);
+                        row.style.display = (mStatus && mCategory && mOvertime && mOverstep) ? '' : 'none';
                     }});
                 }}
 
-                // --- 排序功能 ---
                 function sortTable(colIdx, type) {{
                     const tbody = document.getElementById('tableBody');
                     const rows = Array.from(tbody.rows);
-
-                    // 切换方向
                     sortDirections[colIdx] = !sortDirections[colIdx];
                     const dir = sortDirections[colIdx] ? 1 : -1;
 
                     rows.sort((a, b) => {{
                         let valA = a.cells[colIdx].getAttribute('data-val') || a.cells[colIdx].innerText.trim();
                         let valB = b.cells[colIdx].getAttribute('data-val') || b.cells[colIdx].innerText.trim();
-
-                        if (type === 'float' || type === 'int') {{
-                            return (parseFloat(valA) - parseFloat(valB)) * dir;
-                        }}
-                        // 字符串排序
+                        if (type !== 'string') return (parseFloat(valA) - parseFloat(valB)) * dir;
                         return valA.localeCompare(valB, 'zh-CN') * dir;
                     }});
-
                     rows.forEach(row => tbody.appendChild(row));
                 }}
 
-                // --- 重置功能 ---
                 function resetAll() {{
-                    // 1. 恢复下拉框
-                    document.getElementById('f_status').value = 'all';
-                    document.getElementById('f_category').value = 'all';
-                    document.getElementById('f_overtime').value = 'all';
-                    document.getElementById('f_overstep').value = 'all';
-
-                    // 2. 应用筛选（显示所有行）
+                    ['f_status', 'f_category', 'f_overtime', 'f_overstep'].forEach(id => document.getElementById(id).value = 'all');
                     applyFilters();
-
-                    // 3. 恢复初始排序（按任务目录升序）
-                    sortDirections = {{}}; // 清空状态
-                    sortDirections[0] = false; // 设置为即将变为 true (升序)
+                    sortDirections = {{0: false}};
                     sortTable(0, 'string');
                 }}
 
-                // --- 通用辅助 ---
                 function copyAndNotify(el, text) {{
                     navigator.clipboard.writeText(text).then(() => {{
                         const tip = el.querySelector('.status-tip');
-                        const old = tip.innerText;
-                        tip.innerText = '✅';
-                        setTimeout(() => tip.innerText = old, 1000);
+                        tip.innerText = '✅ 已复制';
+                        setTimeout(() => tip.innerText = '📋', 1000);
                     }});
                 }}
 
-                window.onscroll = function() {{
-                    const btn = document.getElementById("backToTop");
-                    btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "block" : "none";
+                window.onscroll = () => {{
+                    document.getElementById("backToTop").style.display = (window.scrollY > 300) ? "block" : "none";
                 }};
             </script>
         </body>
@@ -362,14 +363,11 @@ class StandaloneEvaluator:
         if not os.path.exists(self.log_root):
             print(f"❌ 目录不存在: {self.log_root}")
             return
-
         all_dirs = sorted([d for d in os.listdir(self.log_root) if os.path.isdir(os.path.join(self.log_root, d))])
         to_process = [d for d in all_dirs if d not in self.state["processed_dirs"]]
-
         if not to_process:
             print("🙌 所有目录已评估完毕。")
             return
-
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             executor.map(self.process_task, to_process)
 
@@ -379,6 +377,5 @@ if __name__ == "__main__":
     parser.add_argument("--logs_root", type=str)
     parser.add_argument("--uuid", type=str)
     args = parser.parse_args()
-
     evaluator = StandaloneEvaluator(logs_root=args.logs_root, run_uuid=args.uuid)
     evaluator.run()
