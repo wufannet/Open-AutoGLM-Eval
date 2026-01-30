@@ -9,18 +9,22 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 # ==================== 默认配置 ====================
-DEFAULT_LOGS_ROOT = "./logs_eval/20260124_1234_滴滴_详细步骤_v4"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
 EVAL_STORE = "./logs_eval_reports"
 MAX_WORKERS = 10
 
 
 class StandaloneEvaluator:
-    def __init__(self, logs_root=None, run_uuid=None):
-        # 允许外部传入 logs_root
+    def __init__(self, logs_root=None, run_uuid=None, time_threshold=50.0, step_threshold=8 ):
         self.log_root = (logs_root or DEFAULT_LOGS_ROOT).rstrip('/')
         self.store_path = EVAL_STORE
         if not os.path.exists(self.store_path):
             os.makedirs(self.store_path)
+
+        # --- 新增：阈值设置 ---
+        self.time_threshold = time_threshold  # 耗时阈值（秒）
+        self.step_threshold = step_threshold  # 步数阈值
+        # --------------------
 
         self.root_dir_name = os.path.basename(self.log_root)
         self.start_run_time = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -35,7 +39,6 @@ class StandaloneEvaluator:
 
     @staticmethod
     def quick_eval(logs_path):
-        """ 提供给其他 py 文件调用的简单接口 """
         print(f"🚀 开始评估目录: {logs_path}")
         evaluator = StandaloneEvaluator(logs_root=logs_path)
         evaluator.run()
@@ -61,7 +64,6 @@ class StandaloneEvaluator:
                 json.dump(self.state, f, ensure_ascii=False, indent=4)
 
     def extract_task_name(self, dir_name):
-        """ 从目录名中提取目的地 (例如: ..._Task001_勇士篮球总部 -> 勇士篮球总部) """
         parts = dir_name.split('_')
         return parts[-1] if parts else dir_name
 
@@ -109,10 +111,16 @@ class StandaloneEvaluator:
         total = len(results)
         if total == 0: return
 
+        # --- 统计计算 ---
         successes = [r for r in results if r['status'] == 'Success']
+        fails_count = total - len(successes)
         success_rate = (len(successes) / total * 100)
+
         avg_total_time = sum([r.get('duration', 0) for r in results]) / total
+        over_time_tasks = [r for r in results if r.get('duration', 0) > self.time_threshold]
+
         avg_steps = sum([r.get('steps', 0) for r in results]) / total
+        over_step_tasks = [r for r in results if r.get('steps', 0) > self.step_threshold]
 
         rows = ""
         report_dir_abs = os.path.dirname(os.path.abspath(self.html_file))
@@ -123,6 +131,10 @@ class StandaloneEvaluator:
             except:
                 relative_img_path = r['img']
 
+            # 判断是否超过阈值
+            is_over_time = r['duration'] > self.time_threshold
+            is_over_step = r['steps'] > self.step_threshold
+
             rows += f"""
             <tr>
                 <td class="copyable" onclick="copyAndNotify(this, '{r['dir']}')" title="点击复制目录名">
@@ -131,13 +143,15 @@ class StandaloneEvaluator:
                 </td>
                 <td>
                     <a href="{relative_img_path}" target="_blank">
-                        <img src="{relative_img_path}" width="250" onerror="this.alt='无图';this.style.background='#eee';">
+                        <img src="{relative_img_path}" width="200" onerror="this.alt='无图';this.style.background='#eee';">
                     </a>
                 </td>
                 <td style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
                 <td>{r['category']}</td>
                 <td>{r['duration']:.1f}s</td>
+                <td style="color:{'#d93025' if is_over_time else '#5f6368'};">{'是' if is_over_time else '否'}</td>
                 <td>{r['steps']}</td>
+                <td style="color:{'#d93025' if is_over_step else '#5f6368'};">{'是' if is_over_step else '否'}</td>
             </tr>"""
 
         html = f"""
@@ -148,28 +162,38 @@ class StandaloneEvaluator:
             <title>评估报告 - {self.root_dir_name}</title>
             <style>
                 body {{ font-family: "Segoe UI", system-ui, sans-serif; padding: 20px; background: #f0f2f5; color: #333; }}
-                .container {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }}
-                .stat-box {{ display: flex; gap: 15px; margin-bottom: 25px; }}
-                .stat-item {{ background: #ffffff; border: 1px solid #e1e4e8; padding: 15px; border-radius: 8px; flex: 1; text-align: center; }}
-                .stat-value {{ font-size: 24px; font-weight: bold; margin-top: 5px; color: #1a73e8; }}
+                .container {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); position: relative; }}
+                .stat-box {{ display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }}
+                .stat-item {{ background: #ffffff; border: 1px solid #e1e4e8; padding: 12px; border-radius: 8px; flex: 1; min-width: 120px; text-align: center; }}
+                .stat-label {{ font-size: 13px; color: #666; margin-bottom: 5px; }}
+                .stat-value {{ font-size: 20px; font-weight: bold; color: #1a73e8; }}
 
                 table {{ border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; table-layout: fixed; }}
-                th, td {{ border: 1px solid #eef0f2; padding: 12px; text-align: left; word-break: break-all; }}
+                th, td {{ border: 1px solid #eef0f2; padding: 10px; text-align: left; word-break: break-all; }}
                 th {{ background-color: #1a73e8; color: white; position: sticky; top: 0; z-index: 10; }}
                 tr:nth-child(even) {{ background-color: #fafafa; }}
                 tr:hover {{ background-color: #f1f7ff; }}
 
-                /* 复制列交互 */
                 .copyable {{ cursor: pointer; transition: all 0.2s ease; position: relative; }}
                 .copyable:hover {{ background: #e8f0fe !important; }}
-                .copyable code {{ font-family: Consolas, monospace; color: #555; }}
                 .status-tip {{ margin-left: 8px; font-size: 12px; transition: all 0.2s; }}
 
                 img {{ border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s; cursor: zoom-in; }}
                 img:hover {{ transform: scale(1.05); }}
 
-                /* 统计颜色 */
+                /* 颜色 */
                 .val-success {{ color: #34a853; }}
+                .val-fail {{ color: #d93025; }}
+
+                /* 回到顶部按钮 */
+                #backToTop {{
+                    position: fixed; bottom: 30px; right: 30px; 
+                    width: 50px; height: 50px; background: #1a73e8; color: white;
+                    border: none; border-radius: 50%; cursor: pointer;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: none;
+                    font-size: 20px; z-index: 1000;
+                }}
+                #backToTop:hover {{ background: #1557b0; }}
             </style>
 
             <script>
@@ -177,27 +201,30 @@ class StandaloneEvaluator:
                     navigator.clipboard.writeText(text).then(() => {{
                         const tip = el.querySelector('.status-tip');
                         const code = el.querySelector('code');
-
-                        // 保存原始状态
                         const oldTip = tip.innerText;
-                        const oldColor = code.style.color;
-
-                        // 切换反馈状态
                         tip.innerText = '✅ 已复制';
                         tip.style.color = '#34a853';
-                        code.style.color = '#34a853';
                         el.style.backgroundColor = '#e6f4ea';
-
-                        // 1.2秒后恢复
                         setTimeout(() => {{
                             tip.innerText = oldTip;
                             tip.style.color = '';
-                            code.style.color = oldColor;
                             el.style.backgroundColor = '';
                         }}, 1200);
-                    }}).catch(err => {{
-                        console.error('复制失败:', err);
                     }});
+                }}
+
+                // 回到顶部逻辑
+                window.onscroll = function() {{
+                    const btn = document.getElementById("backToTop");
+                    if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {{
+                        btn.style.display = "block";
+                    }} else {{
+                        btn.style.display = "none";
+                    }}
+                }};
+
+                function scrollToTop() {{
+                    window.scrollTo({{ top: 0, behavior: 'smooth' }});
                 }}
             </script>
         </head>
@@ -207,18 +234,23 @@ class StandaloneEvaluator:
                 <p style="color: #666;">项目目录: {self.root_dir_name} | 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
 
                 <div class="stat-box">
-                    <div class="stat-item">总任务<div class="stat-value">{total}</div></div>
-                    <div class="stat-item">成功率<div class="stat-value val-success">{success_rate:.1f}%</div></div>
-                    <div class="stat-item">平均耗时<div class="stat-value">{avg_total_time:.1f}s</div></div>
-                    <div class="stat-item">平均步数<div class="stat-value">{avg_steps:.1f}</div></div>
+                    <div class="stat-item"><div class="stat-label">总任务</div><div class="stat-value">{total}</div></div>
+                    <div class="stat-item"><div class="stat-label">失败任务</div><div class="stat-value val-fail">{fails_count}</div></div>
+                    <div class="stat-item"><div class="stat-label">成功率</div><div class="stat-value val-success">{success_rate:.1f}%</div></div>
+                    <div class="stat-item"><div class="stat-label">平均耗时</div><div class="stat-value">{avg_total_time:.1f}s</div></div>
+                    <div class="stat-item"><div class="stat-label">耗时过长(>{self.time_threshold}s)</div><div class="stat-value val-fail">{len(over_time_tasks)}</div></div>
+                    <div class="stat-item"><div class="stat-label">平均步数</div><div class="stat-value">{avg_steps:.1f}</div></div>
+                    <div class="stat-item"><div class="stat-label">步数过多(>{self.step_threshold})</div><div class="stat-value val-fail">{len(over_step_tasks)}</div></div>
                 </div>
 
                 <table>
                     <colgroup>
-                        <col style="width: 35%;">
-                        <col style="width: 20%;">
-                        <col style="width: 10%;">
+                        <col style="width: 25%;">
                         <col style="width: 15%;">
+                        <col style="width: 8%;">
+                        <col style="width: 12%;">
+                        <col style="width: 10%;">
+                        <col style="width: 10%;">
                         <col style="width: 10%;">
                         <col style="width: 10%;">
                     </colgroup>
@@ -229,12 +261,15 @@ class StandaloneEvaluator:
                             <th>状态</th>
                             <th>分类结果</th>
                             <th>总耗时</th>
+                            <th>耗时过长</th>
                             <th>总步数</th>
+                            <th>步数过多</th>
                         </tr>
                     </thead>
                     <tbody>{rows}</tbody>
                 </table>
             </div>
+            <button id="backToTop" onclick="scrollToTop()" title="回到顶部">↑</button>
         </body>
         </html>
         """
