@@ -134,7 +134,6 @@ class StandaloneEvaluator:
             is_over_time = r['duration'] > self.time_threshold
             is_over_step = r['steps'] > self.step_threshold
 
-            # data- 属性用于 JS 筛选和排序
             rows += f"""
             <tr data-status="{r['status']}" data-category="{r['category']}" data-overtime="{'是' if is_over_time else '否'}" data-overstep="{'是' if is_over_step else '否'}">
                 <td class="copyable" onclick="copyAndNotify(this, '{r['dir']}')">
@@ -178,12 +177,20 @@ class StandaloneEvaluator:
                 .filter-group {{ display: flex; align-items: center; gap: 5px; }}
                 select {{ padding: 5px; border-radius: 4px; border: 1px solid #ccc; }}
 
+                .btn-reset {{
+                    padding: 6px 12px; background: #5f6368; color: white; border: none; 
+                    border-radius: 4px; cursor: pointer; transition: background 0.2s;
+                }}
+                .btn-reset:hover {{ background: #3c4043; }}
+
                 /* 表格样式 */
                 table {{ border-collapse: collapse; width: 100%; font-size: 13px; table-layout: fixed; }}
                 th, td {{ border: 1px solid #eef0f2; padding: 10px; text-align: left; word-break: break-all; }}
                 th {{ background-color: #1a73e8; color: white; position: sticky; top: 0; z-index: 10; user-select: none; }}
-                .sortable {{ cursor: pointer; }}
+                .sortable {{ cursor: pointer; position: relative; }}
                 .sortable:hover {{ background-color: #1557b0; }}
+                .sort-icon {{ font-size: 10px; margin-left: 4px; opacity: 0.8; }}
+
                 tr:nth-child(even) {{ background-color: #fafafa; }}
                 tr:hover {{ background-color: #f1f7ff; }}
 
@@ -245,19 +252,20 @@ class StandaloneEvaluator:
                             <option value="否">否</option>
                         </select>
                     </div>
-                    <span style="color:#888; margin-left:10px;">(点击表头耗时/步数可排序)</span>
+                    <button class="btn-reset" onclick="resetAll()">🔄 重置全部</button>
+                    <span style="color:#888; margin-left:10px;">(点击表头列名可进行排序)</span>
                 </div>
 
                 <table id="resultTable">
                     <thead>
                         <tr>
-                            <th style="width: 25%;">任务目录</th>
+                            <th class="sortable" onclick="sortTable(0, 'string')" style="width: 25%;">任务目录 <span class="sort-icon">↕</span></th>
                             <th style="width: 15%;">最后截图</th>
                             <th style="width: 8%;">状态</th>
                             <th style="width: 12%;">分类结果</th>
-                            <th class="sortable" onclick="sortTable(4, 'float')" style="width: 10%;">总耗时 ↕</th>
+                            <th class="sortable" onclick="sortTable(4, 'float')" style="width: 10%;">总耗时 <span class="sort-icon">↕</span></th>
                             <th style="width: 10%;">耗时过长</th>
-                            <th class="sortable" onclick="sortTable(6, 'int')" style="width: 10%;">总步数 ↕</th>
+                            <th class="sortable" onclick="sortTable(6, 'int')" style="width: 10%;">总步数 <span class="sort-icon">↕</span></th>
                             <th style="width: 10%;">步数过多</th>
                         </tr>
                     </thead>
@@ -268,6 +276,9 @@ class StandaloneEvaluator:
             <button id="backToTop" onclick="window.scrollTo({{top: 0, behavior: 'smooth'}})">↑</button>
 
             <script>
+                // 记录排序状态
+                let sortDirections = {{}};
+
                 // --- 筛选功能 ---
                 function applyFilters() {{
                     const status = document.getElementById('f_status').value;
@@ -287,7 +298,6 @@ class StandaloneEvaluator:
                 }}
 
                 // --- 排序功能 ---
-                let sortDirections = {{}};
                 function sortTable(colIdx, type) {{
                     const tbody = document.getElementById('tableBody');
                     const rows = Array.from(tbody.rows);
@@ -297,16 +307,34 @@ class StandaloneEvaluator:
                     const dir = sortDirections[colIdx] ? 1 : -1;
 
                     rows.sort((a, b) => {{
-                        let valA = a.cells[colIdx].getAttribute('data-val') || a.cells[colIdx].innerText;
-                        let valB = b.cells[colIdx].getAttribute('data-val') || b.cells[colIdx].innerText;
+                        let valA = a.cells[colIdx].getAttribute('data-val') || a.cells[colIdx].innerText.trim();
+                        let valB = b.cells[colIdx].getAttribute('data-val') || b.cells[colIdx].innerText.trim();
 
                         if (type === 'float' || type === 'int') {{
                             return (parseFloat(valA) - parseFloat(valB)) * dir;
                         }}
-                        return valA.localeCompare(valB) * dir;
+                        // 字符串排序
+                        return valA.localeCompare(valB, 'zh-CN') * dir;
                     }});
 
                     rows.forEach(row => tbody.appendChild(row));
+                }}
+
+                // --- 重置功能 ---
+                function resetAll() {{
+                    // 1. 恢复下拉框
+                    document.getElementById('f_status').value = 'all';
+                    document.getElementById('f_category').value = 'all';
+                    document.getElementById('f_overtime').value = 'all';
+                    document.getElementById('f_overstep').value = 'all';
+
+                    // 2. 应用筛选（显示所有行）
+                    applyFilters();
+
+                    // 3. 恢复初始排序（按任务目录升序）
+                    sortDirections = {{}}; // 清空状态
+                    sortDirections[0] = false; // 设置为即将变为 true (升序)
+                    sortTable(0, 'string');
                 }}
 
                 // --- 通用辅助 ---
