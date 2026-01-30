@@ -164,7 +164,7 @@ class ActionHandler:
         # check ride place order
         # Parsing action: do(action="Tap", element=[756,946])
 
-        if abs_x > 500 and abs_y > 850 and step_count > 2: #解决首页广告错误判断打车错误. 步数要大于 2
+        if abs_x > 500 and abs_y > 850 and step_count > 2: #解决执行禁止操作呼叫打车问题,解决首页广告错误判断打车错误,步数要大于 2
             return ActionResult(
                 success=False,
                 should_finish=True,
