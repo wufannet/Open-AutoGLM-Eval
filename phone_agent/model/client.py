@@ -38,7 +38,8 @@ class ModelResponse:
     time_to_first_token: float | None = None  # Time to first token (seconds)
     time_to_thinking_end: float | None = None  # Time to thinking end (seconds)
     total_time: float | None = None  # Total inference time (seconds)
-
+    parse_action_ok: bool | None = None
+    action_obj:dict[str, Any] | None = None
 
 class ModelClient:
     """

@@ -15,6 +15,7 @@ from datetime import datetime
 import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+import copy
 
 @dataclass
 class AgentConfig:
@@ -235,6 +236,91 @@ class PhoneAgent:
         except Exception as e:
             print(f"Failed to save log: {e}")
 
+    @staticmethod
+    def get_best_response(responses: list[ModelResponse]) -> ModelResponse:
+        """
+        从多个并行响应中选出最优结果。
+        逻辑：
+        1. 校验解析状态
+        2. 优先返回非 'do' 动作 (如 finish)
+        3. 优先返回非 'Tap' 动作 (如 Scroll, Input)
+        4. 对多个 Tap 动作进行坐标平滑处理 (去掉最大值取平均)
+        """
+        if not responses:
+            return None
+
+        # --- 1. 遍历校验解析状态 ---
+        ok_responses = [r for r in responses if r.parse_action_ok is True]
+
+        if not ok_responses:
+            return responses[0]  # 全部失败，返回第一个
+        if len(ok_responses) == 1:
+            return ok_responses[0]  # 只有一个解析成功
+        #  {
+        #   "_metadata": "do",
+        #   "action": "Tap",
+        #   "element": [
+        #     499,
+        #     165
+        #   ]
+        # }
+        # action_type = action.get("_metadata")
+        # element = action.get("element")
+
+        # --- 2. 遍历检查 _metadata (非 do 优先) ---
+        # 例如：finish(message="xxx") 通常解析后的 _metadata 为 "finish"
+        for r in ok_responses:
+            if r.action_obj and r.action_obj.get("_metadata") != "do":
+                return r
+
+        # --- 3. 遍历检查 action 类型 (非 Tap 优先) ---
+        # 如果有输入、滑动等复杂操作，不进行投票，直接取第一个遇到的
+        for r in ok_responses:
+            if r.action_obj and r.action_obj.get("action") != "Tap":
+                return r
+
+        # --- 4. 坐标平滑处理 (针对全为 Tap 的情况) ---
+        # 5. 坐标去噪 (X:[300,320,500]->310, Y:[500,600,520]->510)
+        # 提取所有有效的坐标
+        coords_x = []  # x的坐标如[300,320,500]
+        coords_y = []
+        old_elements = []
+
+        for r in ok_responses:
+            element = r.action_obj.get("element")
+            old_elements.append(element)
+            if isinstance(element, list) and len(element) >= 2:
+                coords_x.append(float(element[0]))
+                coords_y.append(float(element[1]))
+
+        if len(coords_x) >= 2:
+            # 逻辑：丢弃最大值，计算剩余的平均值
+            def get_denoised_avg(data_list):
+                if not data_list: return 0
+                if len(data_list) == 1: return data_list[0]
+
+                sorted_data = sorted(data_list)
+                # 丢弃最大值（最后一个）
+                trimmed_data = sorted_data[:-1]
+                return sum(trimmed_data) / len(trimmed_data)
+
+            avg_x = get_denoised_avg(coords_x)
+            avg_y = get_denoised_avg(coords_y)
+
+            # 构建最终返回对象
+            # 深拷贝第一个 OK 的响应，防止修改原始数据
+            best_res = copy.deepcopy(ok_responses[0])  # 到5. 坐标去噪,只有全部是 tap类型才可能.非 do,和非 tap都返回了
+            best_res.action_obj["element"] = [int(avg_x), int(avg_y)]
+
+            # 同步更新 action 字符串描述（可选，保持数据一致性）
+            new_coords_str = f"({int(avg_x)}, {int(avg_y)})"
+            # 假设原始 action 是 do(action=Tap(element=[x, y]))
+            # 这里进行简单的字符串替换，或者重新生成
+            best_res.action = f"do(action=Tap(element=[{int(avg_x)}, {int(avg_y)}]))"
+            best_res.action_obj["old_elements"] = old_elements  # 方便排错,保留原始坐标数据
+            return best_res
+
+        return ok_responses[0]
 
     def request_n(self, messages: list[dict[str, Any]], n: int = 3, text_content=None) -> list[ModelResponse]:
         """并行请求 n 次，仅展示第一次请求的流式输出"""
@@ -251,6 +337,18 @@ class PhoneAgent:
             #1.保存log,json到文件
             self.log_model_message(response, index, text_content)
             #2.解析
+            parse_action_ok = True
+            # Parse action from response
+            try:
+                # print(f"Response:\n{response}\nResponse end")
+                action = parse_action(response.action)  # 从 action字符串解析 action对象
+                response.action_obj = action
+            except ValueError as e:
+                if self.agent_config.verbose:
+                    traceback.print_exc()
+                # action解析错误
+                parse_action_ok = False
+            response.parse_action_ok=parse_action_ok
             return response
 
         with ThreadPoolExecutor(max_workers=n) as executor:
@@ -305,8 +403,8 @@ class PhoneAgent:
             print(f"💭 {msgs['thinking']}:") #💭 思考过程: request中会答应思考过程,出错会是空
             print("-" * 50)
             # response = self.model_client.request(self._context,is_print=False)
-            resources = self.request_n(self._context,n = 3, text_content=text_content)
-            response = resources[0]
+            responses = self.request_n(self._context,n = 3, text_content=text_content)
+            response = self.get_best_response(responses)
             print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
 
         except Exception as e:
@@ -327,8 +425,10 @@ class PhoneAgent:
         # Parse action from response
         try:
             # print(f"Response:\n{response}\nResponse end")
-
-            action = parse_action(response.action) #从 action字符串解析 action对象
+            if response.parse_action_ok:
+                action = response.action_obj
+            else:
+                action = parse_action(response.action)  # 从 action字符串解析 action对象
             self._parse_action_error_count = 0
             if self.agent_config.verbose: #解析成功才打印
                 # Print thinking process
