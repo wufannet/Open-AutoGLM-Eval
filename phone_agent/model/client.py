@@ -8,6 +8,7 @@ from typing import Any
 from openai import OpenAI
 
 from phone_agent.config.i18n import get_message
+from concurrent.futures import ThreadPoolExecutor
 
 
 @dataclass
@@ -51,19 +52,61 @@ class ModelClient:
         self.config = config or ModelConfig()
         self.client = OpenAI(base_url=self.config.base_url, api_key=self.config.api_key)
 
-    def request(self, messages: list[dict[str, Any]]) -> ModelResponse:
+    def request_n(self, messages: list[dict[str, Any]], n: int = 3) -> list[ModelResponse]:
+        """并行请求 n 次，仅展示第一次请求的流式输出"""
+
+        def safe_request(index: int):
+            # 只有第一个请求 (index 0) 不是 silent 模式
+            # 这样用户能看到其中一个模型的“思考过程”，而不会导致终端混乱
+            is_print = index == 0
+            if is_print:
+                print(f"\n[Parallel] 发起 {n} 路并行请求，正在展示第 1 路的实时思考...\n")
+
+
+            return self.client.request(messages, is_print=is_print)
+
+        with ThreadPoolExecutor(max_workers=n) as executor:
+            # 提交 n 个任务
+            results = list(executor.map(safe_request, range(n)))
+
+        return results
+
+    def get_best_response(results: list[ModelResponse]) -> ModelResponse:
+        # 1. 尝试完全匹配（字符串级别）
+        action_counts = {}
+        for res in results:
+            action_counts[res.action] = action_counts.get(res.action, 0) + 1
+
+        # 找到票数最多的 action
+        best_action = max(action_counts, key=action_counts.get)
+
+        if action_counts[best_action] >= 2:
+            # 如果有 2 票及以上达成一致，直接返回对应的 response 对象
+            for res in results:
+                if res.action == best_action:
+                    return res
+
+        # 2. 如果 1:1:1 互不相同，则执行你说的“想法 2”：调用更强的 VLM 做裁判
+        return call_strong_vlm_judge(results)
+
+    def request(self, messages: list[dict[str, Any]], is_print: bool = True) -> ModelResponse:
         """
         Send a request to the model.
 
         Args:
             messages: List of message dictionaries in OpenAI format.
-
+            is_print: is print.
         Returns:
             ModelResponse containing thinking and action.
 
         Raises:
             ValueError: If the response cannot be parsed.
         """
+
+        # 定义内部辅助打印函数
+        def _log(msg: str = "", end: str = "\n", flush: bool = False):
+            if is_print:
+                print(msg, end=end, flush=flush)
         # Start timing
         start_time = time.time()
         time_to_first_token = None
@@ -110,8 +153,8 @@ class ModelClient:
                     if marker in buffer:
                         # Marker found, print everything before it
                         thinking_part = buffer.split(marker, 1)[0]
-                        print(thinking_part, end="", flush=True)
-                        print()  # Print newline after thinking is complete
+                        _log(thinking_part, end="", flush=True)
+                        _log()  # Print newline after thinking is complete
                         in_action_phase = True
                         marker_found = True
 
@@ -137,7 +180,7 @@ class ModelClient:
 
                 if not is_potential_marker:
                     # Safe to print the buffer
-                    print(buffer, end="", flush=True)
+                    _log(buffer, end="", flush=True)
                     buffer = ""
 
         # Calculate total time
@@ -148,22 +191,22 @@ class ModelClient:
 
         # Print performance metrics
         lang = self.config.lang
-        print()
-        print("=" * 50)
-        print(f"⏱️  {get_message('performance_metrics', lang)}:") #  ⏱️  性能指标:
-        print("-" * 50)
+        _log()
+        _log("=" * 50)
+        _log(f"⏱️  {get_message('performance_metrics', lang)}:") #  ⏱️  性能指标:
+        _log("-" * 50)
         if time_to_first_token is not None:
-            print(
+            _log(
                 f"{get_message('time_to_first_token', lang)}: {time_to_first_token:.3f}s" #首 Token 延迟 (TTFT)
             )
         if time_to_thinking_end is not None:
-            print(
+            _log(
                 f"{get_message('time_to_thinking_end', lang)}:        {time_to_thinking_end:.3f}s" #思考完成延迟
             )
-        print(
+        _log(
             f"{get_message('total_inference_time', lang)}:          {total_time:.3f}s" #总推理时间
         )
-        print("=" * 50)
+        _log("=" * 50)
 
         return ModelResponse(
             thinking=thinking,

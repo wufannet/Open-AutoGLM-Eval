@@ -10,11 +10,11 @@ from phone_agent.actions.handler import do, finish, parse_action, ActionResult
 from phone_agent.config import get_messages, get_system_prompt
 from phone_agent.device_factory import get_device_factory
 from phone_agent.model import ModelClient, ModelConfig
-from phone_agent.model.client import MessageBuilder
+from phone_agent.model.client import MessageBuilder, ModelResponse
 from datetime import datetime
 import os
 import uuid
-
+from concurrent.futures import ThreadPoolExecutor
 
 @dataclass
 class AgentConfig:
@@ -87,6 +87,7 @@ class PhoneAgent:
         self._step_count = 0
         self._parse_action_error_count = 0
         self._error_log:  list[dict[str, Any]] = []
+        self._image_save_path = "./logs"
 
 
     def run(self, task: str,image_save_path: str) -> str:
@@ -101,6 +102,7 @@ class PhoneAgent:
         """
         self._context = []
         self._step_count = 0
+        self._image_save_path = image_save_path
         # 记录自动化评估需要的数据
         program_start_time = datetime.now()
         hit_step_limit = False
@@ -184,6 +186,79 @@ class PhoneAgent:
         self._context = []
         self._step_count = 0
 
+    @staticmethod
+    def safe_serialize(response):
+        try:
+            return vars(response)
+        except TypeError:
+            return str(response)
+
+    def log_model_message(self, response, index: int, text_content=None):
+        """
+        记录模型接口日志到指定的 JSON 文件。
+
+        Args:
+            response: 模型响应对象，需包含 total_time 属性。
+            message_save_path: 日志保存的目录路径。
+            index: 请求缩影
+        """
+
+
+        message_save_path =self._image_save_path
+        file_prefix = f"step_{self._step_count}_req_{index}"
+
+        # 构建文件路径
+        message_file = os.path.join(message_save_path,f"{file_prefix}.json")
+
+        # 提取响应数据
+        # 如果 response 是对象则转为字典，如果是字典则直接使用
+        # resp_data = vars(response) if hasattr(response, '__dict__') else response
+
+        message_data = {
+            "name": "manager",
+            "messages": self._context,
+            "response": self.safe_serialize(response),
+            "step_id": self._step_count,
+            "total_time": response.total_time,
+        }
+
+        try:
+            with open(message_file, 'w', encoding='utf-8') as json_file:
+                json.dump(message_data, json_file, ensure_ascii=False, indent=4)
+                # Save prompt and output to manager.log
+            log_file = os.path.join(message_save_path, f"{file_prefix}.log")
+            with open(log_file, "w", encoding="utf-8") as f:
+                f.write("=== PROMPT ===\n")
+                f.write(text_content + "\n\n")  # 无图片提示词方便查看,只有用户提示词
+                f.write("=== OUTPUT ===\n")
+                f.write(response.raw_content)  # 怎么没有标签,模型并没有按照要求
+        except Exception as e:
+            print(f"Failed to save log: {e}")
+
+
+    def request_n(self, messages: list[dict[str, Any]], n: int = 3, text_content=None) -> list[ModelResponse]:
+        """并行请求 n 次，仅展示第一次请求的流式输出"""
+
+        def safe_request(index: int):
+            # 只有第一个请求 (index 0) 不是 silent 模式
+            # 这样用户能看到其中一个模型的“思考过程”，而不会导致终端混乱
+            is_print = index == 0
+            if is_print:
+                print(f"\n[Parallel] 发起 {n} 路并行请求，正在展示第 1 路的实时思考...\n")
+
+            response = self.model_client.request(self._context, is_print=is_print)
+            # 能并行的都并行
+            #1.保存log,json到文件
+            self.log_model_message(response, index, text_content)
+            #2.解析
+            return response
+
+        with ThreadPoolExecutor(max_workers=n) as executor:
+            # 提交 n 个任务
+            results = list(executor.map(safe_request, range(n)))
+
+        return results
+
     def _execute_step(
         self, user_prompt: str | None = None, is_first: bool = False,image_save_path: str = ""
     ) -> StepResult:
@@ -229,8 +304,11 @@ class PhoneAgent:
             print("\n" + "=" * 50) #--------------------------------------------------
             print(f"💭 {msgs['thinking']}:") #💭 思考过程: request中会答应思考过程,出错会是空
             print("-" * 50)
-            response = self.model_client.request(self._context)
+            # response = self.model_client.request(self._context,is_print=False)
+            resources = self.request_n(self._context,n = 3, text_content=text_content)
+            response = resources[0]
             print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
+
         except Exception as e:
             if self.agent_config.verbose:
                 traceback.print_exc()
@@ -241,33 +319,6 @@ class PhoneAgent:
                 thinking="",
                 message=f"Model error: {e}",
             )
-
-        # 记录模型接口日志
-        message_save_path = image_save_path
-        message_file = os.path.join(image_save_path, f"step_{self._step_count}.json")
-        message_data = {
-            "name": "manager",
-            "messages": self._context,
-            "response": vars(response),
-            "step_id": self._step_count,
-            "total_time": response.total_time,
-            # "prompt_tokens": manager_usage.get("prompt_tokens", 0),
-            # "completion_tokens": manager_usage.get("completion_tokens", 0),
-            # "total_tokens": manager_usage.get("total_tokens", 0),
-            # "prompt_tokens_price": manager_usage.get("prompt_tokens_price", 0.0),
-            # "completion_tokens_price": manager_usage.get("completion_tokens_price", 0.0),
-            # "total_tokens_price": manager_usage.get("total_tokens_price", 0.0),
-        }
-        with open(message_file, 'w', encoding='utf-8') as json_file:
-            json.dump(message_data, json_file, ensure_ascii=False, indent=4)
-
-        # Save prompt and output to manager.log
-        log_file = os.path.join(message_save_path, f"step_{self._step_count}.log")
-        with open(log_file, "w", encoding="utf-8") as f:
-            f.write("=== PROMPT ===\n")
-            f.write(text_content + "\n\n") #无图片提示词方便查看,只有用户提示词
-            f.write("=== OUTPUT ===\n")
-            f.write(response.raw_content) #怎么没有标签,模型并没有按照要求
 
         # Remove image from context to save space 移动到前面保证执行
         self._context[-1] = MessageBuilder.remove_images_from_message(self._context[-1])
