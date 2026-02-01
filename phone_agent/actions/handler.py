@@ -379,6 +379,9 @@ def parse_action(response: str) -> dict[str, Any]:
         ValueError: If the response cannot be parsed.
     """
     print(f"Parsing action: {response}")
+    response = response.replace("Tap element", '"Tap", element').strip()
+    print(f"replace action: {response}")
+
     try:
         response = response.strip()
         if response.startswith('do(action="Type"') or response.startswith(

@@ -34,6 +34,8 @@ from phone_agent.xctest import XCTestConnection
 from phone_agent.xctest import list_devices as list_ios_devices
 from datetime import datetime
 from phone_agent.config.apps import APP_PACKAGES
+from dotenv import load_dotenv
+load_dotenv()
 
 def check_system_requirements(
     device_type: DeviceType = DeviceType.ADB, wda_url: str = "http://localhost:8100"
@@ -402,6 +404,8 @@ Examples:
         """,
     )
 
+
+
     # Model options
     parser.add_argument(
         "--base-url",
@@ -523,11 +527,7 @@ Examples:
     )
     parser.add_argument("--log_name", type=str, default="")
     parser.add_argument("--app", type=str, default="") #评估清理环境,关闭应用包名
-    parser.add_argument(
-        "--eval",
-        type=int,
-        default=0,
-        help="",
+    parser.add_argument("--eval", type=int,default=0,help="",
     )
 
     return parser.parse_args()
@@ -699,13 +699,19 @@ def main():
         os.mkdir(image_save_path)
 
     # 自动化评估清理环境,先简单支持安卓
-    is_stop_app = stop_app(args.app,args.device_id)
-    if not is_stop_app:
-        print("reset env error return is_stop_app false")
-        return
+    if args.app:
+        is_stop_app = stop_app(args.app, args.device_id)
+        if not is_stop_app:
+            print("reset env error return is_stop_app false")
+            return
+        else:
+            print("reset env succeed is_stop_app true")
     else:
-        print("reset env succeed is_stop_app true")
-        # return
+        print("args.app null,不用先 stop app")
+
+
+
+
 
 
 
@@ -763,7 +769,10 @@ def main():
         else "http://localhost:8100",
     ):
         sys.exit(1)
-
+    # print(f"读取到的API_KEY: {args.apikey}")
+    if not args.apikey:
+        print("❌ 错误: 未在环境变量或 .env 文件中找到 API_KEY")
+        sys.exit(1)
     # Check model API connectivity and model availability
     if not check_model_api(args.base_url, args.model, args.apikey):
         sys.exit(1)

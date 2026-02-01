@@ -5,6 +5,9 @@ APP_PACKAGES: dict[str, str] = {
     "花小猪": "com.huaxiaozhu.rider",
     # Social & Messaging
     "微信": "com.tencent.mm",
+    "企业微信": "com.tencent.ww",
+    "微信读书": "com.tencent.weread",
+    "微信听书": "com.tencent.wehear",
     "QQ": "com.tencent.mobileqq",
     "微博": "com.sina.weibo",
     # E-commerce
