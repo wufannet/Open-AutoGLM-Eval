@@ -21,9 +21,9 @@ if not API_KEY:
     sys.exit(1)
 
 # ==================== 默认配置 ====================
-DEFAULT_LOGS_ROOT = "./logs_eval/20260131_1630_滴滴_并行生成多次_v17_1"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
 EVAL_STORE = "./logs_eval_reports"
-MAX_WORKERS = 10
+MAX_WORKERS = 1
 
 
 class StandaloneEvaluator:
@@ -83,12 +83,27 @@ class StandaloneEvaluator:
         import random
         return random.choice(["UI阻断", "搜索无结果", "定位偏差"])
 
-    def llm_eval(self, img_path):
-        result = self.llmServer.request(
-            {"image_dir": img_path, "app_name": "滴滴", "LOG_TAG": "didi_eval", "prompt": Prompt.didi_eval})
-        if not result:
+    def llm_eval(self, img_path,data):
+        task = data.get("task")
+        # 使用正则表达式提取引号内的内容
+        # 这里的逻辑是：匹配 “输入“ 之后，到下一个 ” 结束之前的所有字符
+        match = re.search(r'输入“([^”]+)”', task)
+
+        if match:
+            destination = match.group(1)
+            print(f"提取的目的地为: {destination}")
+            result = self.llmServer.request(
+                {"image_dir": img_path, "app_name": "滴滴", "LOG_TAG": "didi_eval", "prompt": Prompt.didi_eval_v2+destination})
+            if not result:
+                result = {
+                    'final_decision': {'reason': 'request failed', 'decision': 'FAILED',
+                                       'error_type': 'request failed'}}
+        else:
+            print("未找到目的地信息")
             result = {
-                'final_decision': {'reason': 'request failed', 'decision': 'FAILED', 'error_type': 'request failed'}}
+                'final_decision': {'reason': '未找到目的地信息', 'decision': 'FAILED',
+                                   'error_type': '未找到目的地信息'}}
+
         return result
 
     def process_task(self, dir_name):
@@ -102,8 +117,9 @@ class StandaloneEvaluator:
 
             is_success = data.get("result_type") == 1
             # category = "成功" if is_success else self.mock_llm_classify(data.get("final_img"))
-            llm_eval_result = self.llm_eval(data.get("final_img"))
-
+            llm_eval_result = self.llm_eval(data.get("final_img"),data)
+            # {'is_on_call_page': {'decision': 'SUCCESS'}, 'price_list_check': {'decision': 'SUCCESS'}, 'destination_check': {'decision': 'FAILED'},
+            # 'final_decision': {'reason': '', 'decision': 'FAILED', 'error_type': 'destination_check'}}
             res = {
                 "dir": dir_name,
                 "task_name": self.extract_task_name(dir_name),
@@ -112,7 +128,10 @@ class StandaloneEvaluator:
                 "duration": float(data.get("program_duration_seconds", 0)),
                 "steps": int(data.get("step_count", 0)),
                 "img": data.get("final_img", ""),
-                "eval_at": datetime.now().strftime("%H:%M:%S")
+                "eval_at": datetime.now().strftime("%H:%M:%S"),
+                "llm_eval_result": llm_eval_result,
+                "llm_eval_result_decision": llm_eval_result.get("final_decision").get("decision"),
+                # "llm_eval_result_error_type": llm_eval_result,
             }
 
             with self.lock:
@@ -174,6 +193,7 @@ class StandaloneEvaluator:
                 </td>
                 <td class="cell-status" style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
                 <td class="cell-category">{r['category']}</td>
+                <td class="cell-category">{r['llm_eval_result']}</td>
                 <td class="cell-duration" data-val="{r['duration']}">{r['duration']:.1f}s</td>
                 <td class="cell-overtime">{'是' if is_over_time else '否'}</td>
                 <td class="cell-steps" data-val="{r['steps']}">{r['steps']}</td>
