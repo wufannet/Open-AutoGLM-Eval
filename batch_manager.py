@@ -127,8 +127,8 @@ class BatchAgentRunner:
 
 
 if __name__ == "__main__":
-    BASE_LOG_DIR = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
-    RUN_COUNT = 50
+    BASE_LOG_DIR = "./logs_eval/20260131_1704_滴滴_并行生成多次_v17_p17_c1_p30_1"
+    RUN_COUNT = 20
     runner = BatchAgentRunner()
     runner.start()
     # 2. 任务结束后直接调用评估 (传入刚才定义的 BASE_LOG_DIR)

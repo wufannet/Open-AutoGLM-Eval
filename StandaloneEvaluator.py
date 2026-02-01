@@ -7,9 +7,21 @@ import argparse
 import re
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
+import os
+import sys
+from ride.ride_llm_server import RideLlmServer
+from dotenv import load_dotenv
+from ride.prompt import Prompt
+load_dotenv()
+
+# 从环境变量中读取，如果读取不到则报错
+API_KEY = os.getenv("ZP_API_KEY")
+if not API_KEY:
+    print("❌ 错误: 未在环境变量或 .env 文件中找到 API_KEY")
+    sys.exit(1)
 
 # ==================== 默认配置 ====================
-DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260131_1630_滴滴_并行生成多次_v17_1"
 EVAL_STORE = "./logs_eval_reports"
 MAX_WORKERS = 10
 
@@ -34,6 +46,7 @@ class StandaloneEvaluator:
 
         self.state = self._load_state()
         self.lock = threading.Lock()
+        self.llmServer = RideLlmServer(API_KEY, "https://open.bigmodel.cn/api/paas/v4", "glm-4.6v-flash")
 
     @staticmethod
     def quick_eval(logs_path):
@@ -70,6 +83,14 @@ class StandaloneEvaluator:
         import random
         return random.choice(["UI阻断", "搜索无结果", "定位偏差"])
 
+    def llm_eval(self, img_path):
+        result = self.llmServer.request(
+            {"image_dir": img_path, "app_name": "滴滴", "LOG_TAG": "didi_eval", "prompt": Prompt.didi_eval})
+        if not result:
+            result = {
+                'final_decision': {'reason': 'request failed', 'decision': 'FAILED', 'error_type': 'request failed'}}
+        return result
+
     def process_task(self, dir_name):
         task_path = os.path.join(self.log_root, dir_name)
         result_json = os.path.join(task_path, "task_result.json")
@@ -80,13 +101,14 @@ class StandaloneEvaluator:
                 data = json.load(f)
 
             is_success = data.get("result_type") == 1
-            category = "成功" if is_success else self.mock_llm_classify(data.get("final_img"))
+            # category = "成功" if is_success else self.mock_llm_classify(data.get("final_img"))
+            llm_eval_result = self.llm_eval(data.get("final_img"))
 
             res = {
                 "dir": dir_name,
                 "task_name": self.extract_task_name(dir_name),
                 "status": "Success" if is_success else "Failed",
-                "category": category,
+                "category": llm_eval_result.get("final_decision").get("error_type"),
                 "duration": float(data.get("program_duration_seconds", 0)),
                 "steps": int(data.get("step_count", 0)),
                 "img": data.get("final_img", ""),

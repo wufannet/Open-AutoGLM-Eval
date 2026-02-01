@@ -16,7 +16,7 @@ class RideLlmServer(object):
         self.vllm = GUIOwlWrapper(api_key, base_url, model_name)
         self.model_name = model_name
 
-    def request(self, data: Dict) -> Dict:
+    def request(self, data: Dict) -> Dict|None:
         # LOG_TAG = self.__class__.__name__
         image_dir = data['image_dir']
         app_name = data['app_name']
@@ -68,6 +68,5 @@ class RideLlmServer(object):
         except Exception as e:
             print(f"⚠️ 无法格式化响应内容: {e}")
             print('output_action开始:\n' + str(output_action) + '\noutput_action结束\n')
-            raise e
-
+            return None
 
