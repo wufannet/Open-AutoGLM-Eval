@@ -154,6 +154,22 @@ class StandaloneEvaluator:
         except Exception as e:
             print(f" ❌ 评估出错 {dir_name}: {e}")
 
+    def syntax_highlight_json(self, json_str):
+        """为 JSON 字符串添加 HTML 颜色标签"""
+        import re
+        # 转义 HTML 基本字符防止冲突
+        json_str = json_str.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+        # 正则替换：
+        # 1. 键 (Key) -> 紫色
+        json_str = re.sub(r'("(.*?)")\s*:', r'<span style="color: #92278f; font-weight:bold;">\1</span>:', json_str)
+        # 2. 字符串值 (String Value) -> 绿色
+        json_str = re.sub(r':\s*("(.*?)")', r': <span style="color: #2a9d8f;">\1</span>', json_str)
+        # 3. 数字/布尔值 (Numbers/Booleans) -> 蓝色
+        json_str = re.sub(r'\b(true|false|null|\d+(\.\d+)?)\b', r'<span style="color: #25aae2;">\1</span>', json_str)
+
+        return json_str
+
     def generate_html(self):
         results = sorted(self.state["results"], key=lambda x: x['dir'])
         total = len(results)
@@ -203,6 +219,8 @@ class StandaloneEvaluator:
 
             # 转换为带缩进的漂亮格式
             formatted_json = json.dumps(raw_data, indent=4, ensure_ascii=False)
+            # 获取高亮版本
+            highlighted_json = self.syntax_highlight_json(formatted_json)
 
             rows += f"""
             <tr data-status="{r['status']}" data-category="{r['category']}" data-overtime="{'是' if is_over_time else '否'}" data-overstep="{'是' if is_over_step else '否'}">
@@ -217,9 +235,9 @@ class StandaloneEvaluator:
                 <td class="cell-status" style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
                 <td class="cell-category">{r['category']}</td>
                 <td class="copyable" 
-                    onclick="copyAndNotify(this, `{formatted_json}`)" 
-                    style="vertical-align: top;">
-                    <pre style="margin: 0; font-family: 'Consolas', monospace; font-size: 12px; color: #d63384; background: #f8f9fa; padding: 8px; border-radius: 4px;"><code>{formatted_json}</code></pre>
+                    onclick="copyAndNotify(this, this.querySelector('code').innerText)" 
+                    style="vertical-align: top; max-width: 400px;">
+                    <pre style="margin: 0; font-family: 'Consolas', monospace; font-size: 12px; background: #fdfdfd; padding: 10px; border: 1px solid #eee; border-radius: 4px; overflow-x: auto;"><code>{highlighted_json}</code></pre>
                     <span class="status-tip">📋</span>
                 </td>
                 <td class="cell-duration" data-val="{r['duration']}">{r['duration']:.1f}s</td>
@@ -339,11 +357,11 @@ class StandaloneEvaluator:
                     <table id="resultTable">
                         <thead>
                             <tr>
-                                <th class="sortable" onclick="sortTable(0, 'string')" style="width: 25%;">任务目录 ↕</th>
+                                <th class="sortable" onclick="sortTable(0, 'string')" style="width: 20%;">任务目录 ↕</th>
                                 <th style="width: 250px;">最后截图</th>
                                 <th style="width: 60px;">状态</th>
                                 <th style="width: 100px;">分类结果</th>
-                                <th style="width: 250px;">模型评判</th>
+                                <th style="width: 35%;">模型评判</th>
                                 <th class="sortable" onclick="sortTable(4, 'float')" style="width: 60px;">总耗时 ↕</th>
                                 <th style="width: 50px;">耗时过长</th>
                                 <th class="sortable" onclick="sortTable(6, 'int')" style="width: 50px;">总步数 ↕</th>
