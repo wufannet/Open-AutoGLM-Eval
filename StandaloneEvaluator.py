@@ -190,6 +190,20 @@ class StandaloneEvaluator:
             is_over_time = r['duration'] > self.time_threshold
             is_over_step = r['steps'] > self.step_threshold
 
+
+            # 假设 r['llm_eval_result'] 是一个字典或 JSON 字符串
+            raw_data = r['llm_eval_result']
+            if isinstance(raw_data, str):
+                # 如果是字符串，先转成对象再格式化，确保缩进有效
+                import ast
+                try:
+                    raw_data = json.loads(raw_data.replace("'", '"'))  # 尝试处理单引号问题
+                except:
+                    raw_data = ast.literal_eval(raw_data)
+
+            # 转换为带缩进的漂亮格式
+            formatted_json = json.dumps(raw_data, indent=4, ensure_ascii=False)
+
             rows += f"""
             <tr data-status="{r['status']}" data-category="{r['category']}" data-overtime="{'是' if is_over_time else '否'}" data-overstep="{'是' if is_over_step else '否'}">
                 <td class="copyable" onclick="copyAndNotify(this, `{r['dir']}`)">
@@ -202,8 +216,11 @@ class StandaloneEvaluator:
                 </td>
                 <td class="cell-status" style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
                 <td class="cell-category">{r['category']}</td>
-                <td class="copyable" onclick="copyAndNotify(this, `{r['llm_eval_result']}`)">
-                    <code>{r['llm_eval_result']}</code><span class="status-tip">📋</span>
+                <td class="copyable" 
+                    onclick="copyAndNotify(this, `{formatted_json}`)" 
+                    style="vertical-align: top;">
+                    <pre style="margin: 0; font-family: 'Consolas', monospace; font-size: 12px; color: #d63384; background: #f8f9fa; padding: 8px; border-radius: 4px;"><code>{formatted_json}</code></pre>
+                    <span class="status-tip">📋</span>
                 </td>
                 <td class="cell-duration" data-val="{r['duration']}">{r['duration']:.1f}s</td>
                 <td class="cell-overtime">{'是' if is_over_time else '否'}</td>
