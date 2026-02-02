@@ -192,7 +192,7 @@ class StandaloneEvaluator:
 
             rows += f"""
             <tr data-status="{r['status']}" data-category="{r['category']}" data-overtime="{'是' if is_over_time else '否'}" data-overstep="{'是' if is_over_step else '否'}">
-                <td class="copyable" onclick="copyAndNotify(this, '{r['dir']}')">
+                <td class="copyable" onclick="copyAndNotify(this, `{r['dir']}`)">
                     <code>{r['dir']}</code><span class="status-tip">📋</span>
                 </td>
                 <td>
@@ -202,7 +202,9 @@ class StandaloneEvaluator:
                 </td>
                 <td class="cell-status" style="color:{'green' if r['status'] == 'Success' else 'red'}; font-weight:bold;">{r['status']}</td>
                 <td class="cell-category">{r['category']}</td>
-                <td class="cell-category">{r['llm_eval_result']}</td>
+                <td class="copyable" onclick="copyAndNotify(this, `{r['llm_eval_result']}`)">
+                    <code>{r['llm_eval_result']}</code><span class="status-tip">📋</span>
+                </td>
                 <td class="cell-duration" data-val="{r['duration']}">{r['duration']:.1f}s</td>
                 <td class="cell-overtime">{'是' if is_over_time else '否'}</td>
                 <td class="cell-steps" data-val="{r['steps']}">{r['steps']}</td>
@@ -283,7 +285,12 @@ class StandaloneEvaluator:
         <body>
             <div class="container">
                 <h1>📊 自动化评估报告</h1>
-                <p style="color: #666; margin-top: -10px;">项目: {self.root_dir_name} | 生成于: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                <p class="copyable" 
+                   style="color: #666; margin-top: -10px; cursor: pointer;" 
+                   onclick="copyAndNotify(this, '项目: {self.root_dir_name} | 生成于: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}')">
+                   项目: {self.root_dir_name} | 生成于: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                   <span class="status-tip">📋</span>
+                </p>
 
                 <div class="top-section">
                     <div class="stat-grid">
@@ -319,7 +326,7 @@ class StandaloneEvaluator:
                                 <th style="width: 250px;">最后截图</th>
                                 <th style="width: 60px;">状态</th>
                                 <th style="width: 100px;">分类结果</th>
-                                <th style="width: 25px;">模型评判</th>
+                                <th style="width: 250px;">模型评判</th>
                                 <th class="sortable" onclick="sortTable(4, 'float')" style="width: 60px;">总耗时 ↕</th>
                                 <th style="width: 50px;">耗时过长</th>
                                 <th class="sortable" onclick="sortTable(6, 'int')" style="width: 50px;">总步数 ↕</th>
