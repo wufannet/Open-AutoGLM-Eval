@@ -106,6 +106,14 @@ class StandaloneEvaluator:
 
         return result
 
+    def llm_eval_mock(self, img_path, data):
+        result = {
+            'final_decision': {'reason': 'llm_eval_mock', 'decision': 'SUCCESS',
+                               'error_type': 'llm_eval_mock'}}
+
+
+        return result
+
     def process_task(self, dir_name):
         task_path = os.path.join(self.log_root, dir_name)
         result_json = os.path.join(task_path, "task_result.json")
@@ -117,7 +125,8 @@ class StandaloneEvaluator:
 
             is_success = data.get("result_type") == 1
             # category = "成功" if is_success else self.mock_llm_classify(data.get("final_img"))
-            llm_eval_result = self.llm_eval(data.get("final_img"),data)
+            # llm_eval_result = self.llm_eval(data.get("final_img"),data)
+            llm_eval_result = self.llm_eval_mock(data.get("final_img"),data)
             # {'is_on_call_page': {'decision': 'SUCCESS'}, 'price_list_check': {'decision': 'SUCCESS'}, 'destination_check': {'decision': 'FAILED'},
             # 'final_decision': {'reason': '', 'decision': 'FAILED', 'error_type': 'destination_check'}}
             res = {
@@ -307,12 +316,14 @@ class StandaloneEvaluator:
                         <thead>
                             <tr>
                                 <th class="sortable" onclick="sortTable(0, 'string')" style="width: 25%;">任务目录 ↕</th>
-                                <th style="width: 260px;">最后截图</th> <th style="width: 100px;">状态</th>
-                                <th style="width: 120px;">分类结果</th>
-                                <th class="sortable" onclick="sortTable(4, 'float')" style="width: 100px;">总耗时 ↕</th>
-                                <th style="width: 100px;">耗时过长</th>
-                                <th class="sortable" onclick="sortTable(6, 'int')" style="width: 100px;">总步数 ↕</th>
-                                <th style="width: 100px;">步数过多</th>
+                                <th style="width: 250px;">最后截图</th>
+                                <th style="width: 60px;">状态</th>
+                                <th style="width: 100px;">分类结果</th>
+                                <th style="width: 25px;">模型评判</th>
+                                <th class="sortable" onclick="sortTable(4, 'float')" style="width: 60px;">总耗时 ↕</th>
+                                <th style="width: 50px;">耗时过长</th>
+                                <th class="sortable" onclick="sortTable(6, 'int')" style="width: 50px;">总步数 ↕</th>
+                                <th style="width: 50px;">步数过多</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">{rows}</tbody>
