@@ -21,7 +21,7 @@ if not API_KEY:
     sys.exit(1)
 
 # ==================== 默认配置 ====================
-DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260131_1704_滴滴_并行生成多次_v17_p17_c1_p30_1"
 EVAL_STORE = "./logs_eval_reports"
 MAX_WORKERS = 1
 
@@ -93,7 +93,7 @@ class StandaloneEvaluator:
             destination = match.group(1)
             print(f"提取的目的地为: {destination}")
             result = self.llmServer.request(
-                {"image_dir": img_path, "app_name": "滴滴", "LOG_TAG": "didi_eval", "prompt": Prompt.didi_eval_v2+destination})
+                {"image_dir": img_path, "app_name": "滴滴", "LOG_TAG": "didi_eval", "prompt": Prompt.didi_eval_v3+destination})
             if not result:
                 result = {
                     'final_decision': {'reason': 'request failed', 'decision': 'FAILED',
@@ -126,7 +126,7 @@ class StandaloneEvaluator:
             is_success = data.get("result_type") == 1
             # category = "成功" if is_success else self.mock_llm_classify(data.get("final_img"))
             # llm_eval_result = self.llm_eval(data.get("final_img"),data)
-            llm_eval_result = self.llm_eval_mock(data.get("final_img"),data)
+            llm_eval_result = self.llm_eval(data.get("final_img"),data)
             # {'is_on_call_page': {'decision': 'SUCCESS'}, 'price_list_check': {'decision': 'SUCCESS'}, 'destination_check': {'decision': 'FAILED'},
             # 'final_decision': {'reason': '', 'decision': 'FAILED', 'error_type': 'destination_check'}}
             res = {
@@ -177,7 +177,8 @@ class StandaloneEvaluator:
 
         # --- 统计逻辑 ---
         successes = [r for r in results if r['status'] == 'Success']
-        fails_count = total - len(successes)
+        successes_count=len(successes)
+        fails_count = total - successes_count
         success_rate = (len(successes) / total * 100)
         avg_total_time = sum([r.get('duration', 0) for r in results]) / total
         over_time_tasks = [r for r in results if r.get('duration', 0) > self.time_threshold]
@@ -259,8 +260,8 @@ class StandaloneEvaluator:
 
                 /* 顶部统计和饼图布局 */
                 .top-section {{ display: flex; gap: 20px; margin-bottom: 25px; align-items: flex-start; }}
-                .stat-grid {{ flex: 3; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }}
-                .stat-item {{ background: #f8f9fa; border: 1px solid #e1e4e8; padding: 15px; border-radius: 8px; text-align: center; }}
+                .stat-grid {{ flex: 3; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }}
+                .stat-item {{ background: #f8f9fa; border: 1px solid #e1e4e8; padding: 10px; border-radius: 8px; text-align: center; }}
                 .stat-label {{ font-size: 12px; color: #666; margin-bottom: 5px; }}
                 .stat-value {{ font-size: 20px; font-weight: bold; color: #1a73e8; }}
                 .val-fail {{ color: #d93025; }}
@@ -330,6 +331,7 @@ class StandaloneEvaluator:
                 <div class="top-section">
                     <div class="stat-grid">
                         <div class="stat-item"><div class="stat-label">总任务</div><div class="stat-value">{total}</div></div>
+                        <div class="stat-item"><div class="stat-label">成功任务</div><div class="stat-value">{successes_count}</div></div>
                         <div class="stat-item"><div class="stat-label">失败任务</div><div class="stat-value val-fail">{fails_count}</div></div>
                         <div class="stat-item"><div class="stat-label">成功率</div><div class="stat-value">{success_rate:.1f}%</div></div>
                         <div class="stat-item"><div class="stat-label">平均耗时</div><div class="stat-value">{avg_total_time:.1f}s</div></div>
