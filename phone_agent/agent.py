@@ -14,8 +14,8 @@ from phone_agent.model.client import MessageBuilder, ModelResponse
 from datetime import datetime
 import os
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 import copy
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED, FIRST_COMPLETED
 
 @dataclass
 class AgentConfig:
@@ -324,6 +324,14 @@ class PhoneAgent:
 
     def request_n(self, messages: list[dict[str, Any]], n: int = 3, text_content=None) -> list[ModelResponse]:
         """并行请求 n 次，仅展示第一次请求的流式输出"""
+        """
+            并行请求 n 次。
+            策略：等待最多 15 秒。如果 15 秒后收集到 >= 2 个结果，则提前返回，忽略慢请求。
+            """
+
+        # 定义配置常量 (也可以提取为参数)
+        SOFT_TIMEOUT = 10  # 软截止时间10秒
+        MIN_REQUIRED = 2  # 最小需要成功的数量
 
         def safe_request(index: int):
             # 只有第一个请求 (index 0) 不是 silent 模式
@@ -351,10 +359,55 @@ class PhoneAgent:
             response.parse_action_ok=parse_action_ok
             return response
 
-        with ThreadPoolExecutor(max_workers=n) as executor:
-            # 提交 n 个任务
-            results = list(executor.map(safe_request, range(n)))
+        results = []
 
+        # 【核心修改 1】手动创建 Executor，不使用 with 上下文管理器
+        executor = ThreadPoolExecutor(max_workers=n)
+        try:
+            # 1. 提交所有任务，获取 Future 对象列表
+            futures = [executor.submit(safe_request, i) for i in range(n)]
+
+            # 2. 第一次等待：设置 15 秒超时
+            # return_when=ALL_COMPLETED 意为“在这个时间内，尽量等所有完成”
+            # 如果超时，它会返回当前已完成的任务集合 (done) 和未完成的集合 (not_done)
+            done, not_done = wait(futures, timeout=SOFT_TIMEOUT, return_when=ALL_COMPLETED)
+
+            # 3. 检查是否满足“提前返回”条件
+            if len(done) >= MIN_REQUIRED:
+                # A情况：已经有 >= 2 个结果，且时间可能已经过了 15s (或者全都在 15s 内完成了)
+                # 动作：直接取结果，放弃 not_done
+                pass
+            else:
+                # B情况：15秒到了，但是完成的还不到 2 个 (遇到了极端的整体延迟)
+                # 动作：我们需要继续等待，直到满足最小数量 (或者你可以选择在这里抛出超时异常)
+                print(f"[Parallel] 10s超时，仅获取 {len(done)} 个结果，继续等待直到满足 {MIN_REQUIRED} 个...")
+
+                # 继续等待剩下的任务，直到有新的任务完成
+                # 这里使用了循环来逐个获取，直到凑够数
+                while len(done) < MIN_REQUIRED and not_done:
+                    # 等待任意一个完成
+                    new_done, not_done = wait(not_done, return_when=FIRST_COMPLETED)
+                    done.update(new_done)
+
+            # 4. 收集结果
+            # 注意：done 是无序的集合。如果必须保持 index=0,1,2 的顺序，需要做额外处理。
+            # 这里假设只要拿到结果就行，顺序不重要。
+            for f in done:
+                try:
+                    results.append(f.result())
+                except Exception as e:
+                    print(f"Task failed: {e}")
+
+            # 5. (可选) 取消剩下的慢请求，节省资源
+            # 注意：Python线程很难强制杀死，但 cancel() 可以阻止尚未开始的任务运行
+            for f in not_done:
+                f.cancel()
+        finally:
+            # 【核心修改 3】关键！wait=False
+            # 告诉 Python: "不要等后台那些慢线程了，直接向下执行，让它们自生自灭"
+            # 这样如果软超时时间已到并且完成了两个，主程序直接 return，
+            # 那个 20s 的线程会在后台默默跑完，不会拖慢主程序。
+            executor.shutdown(wait=False)
         return results
 
     def _execute_step(
