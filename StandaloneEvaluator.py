@@ -21,7 +21,7 @@ if not API_KEY:
     sys.exit(1)
 
 # ==================== 默认配置 ====================
-DEFAULT_LOGS_ROOT = "./logs_eval/20260131_1704_滴滴_并行生成多次_v17_p17_c1_p30_1"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3"
 EVAL_STORE = "./logs_eval_reports"
 MAX_WORKERS = 1
 
@@ -107,9 +107,33 @@ class StandaloneEvaluator:
         return result
 
     def llm_eval_mock(self, img_path, data):
-        result = {
+        result_llm_eval_mock = {
             'final_decision': {'reason': 'llm_eval_mock', 'decision': 'SUCCESS',
                                'error_type': 'llm_eval_mock'}}
+
+        result_2 = {
+            'final_decision': {'reason': 'llm_eval_mock', 'decision': 'SUCCESS',
+                               'error_type': 'llm_eval_mock'}}
+        # result_3 = {
+        #     'final_decision': {'reason': 'llm_eval_mock', 'decision': 'SUCCESS',
+        #                        'error_type': 'llm_eval_mock'}}
+        # result_4 = {
+        #     'final_decision': {'reason': 'llm_eval_mock', 'decision': 'SUCCESS',
+        #                        'error_type': 'llm_eval_mock'}}
+        import random
+        return random.choice([result_llm_eval_mock
+                                 , {
+                                  'final_decision': {'reason': 'llm_eval_mock', 'decision': 'SUCCESS',
+                                                     'error_type': 'NONE'}}
+                                 , {
+                                  'final_decision': {'reason': 'llm_eval_mock', 'decision': 'SUCCESS',
+                                                     'error_type': '处于报价预览页检查'}}
+                                 , {
+                                  'final_decision': {'reason': 'llm_eval_mock', 'decision': 'SUCCESS',
+                                                     'error_type': 'destination_check'}}
+                                 , {
+                                  'final_decision': {'reason': 'llm_eval_mock', 'decision': 'SUCCESS',
+                                                     'error_type': '未找到目的地信息'}}])
 
 
         return result
@@ -126,7 +150,7 @@ class StandaloneEvaluator:
             is_success = data.get("result_type") == 1
             # category = "成功" if is_success else self.mock_llm_classify(data.get("final_img"))
             # llm_eval_result = self.llm_eval(data.get("final_img"),data)
-            llm_eval_result = self.llm_eval(data.get("final_img"),data)
+            llm_eval_result = self.llm_eval_mock(data.get("final_img"),data)
             # {'is_on_call_page': {'decision': 'SUCCESS'}, 'price_list_check': {'decision': 'SUCCESS'}, 'destination_check': {'decision': 'FAILED'},
             # 'final_decision': {'reason': '', 'decision': 'FAILED', 'error_type': 'destination_check'}}
             res = {
@@ -177,7 +201,7 @@ class StandaloneEvaluator:
 
         # --- 统计逻辑 ---
         successes = [r for r in results if r['status'] == 'Success']
-        successes_count=len(successes)
+        successes_count = len(successes)
         fails_count = total - successes_count
         success_rate = (len(successes) / total * 100)
         avg_total_time = sum([r.get('duration', 0) for r in results]) / total
@@ -185,13 +209,32 @@ class StandaloneEvaluator:
         avg_steps = sum([r.get('steps', 0) for r in results]) / total
         over_step_tasks = [r for r in results if r.get('steps', 0) > self.step_threshold]
 
-        # 统计分类数据用于饼图
+        # --- 统计 error_type 用于饼图 ---
+        error_counts = {}
+        for r in results:
+            raw_data = r.get('llm_eval_result', {})
+            if isinstance(raw_data, str):
+                import ast
+                try:
+                    raw_data = json.loads(raw_data.replace("'", '"'))
+                except:
+                    try:
+                        raw_data = ast.literal_eval(raw_data)
+                    except:
+                        raw_data = {}
+
+            # 提取 error_type 并映射 "NONE" -> "成功"
+            e_type = raw_data.get('final_decision', {}).get('error_type', '未知错误')
+            if e_type == "NONE":
+                e_type = "成功"
+
+            error_counts[e_type] = error_counts.get(e_type, 0) + 1
+
+        # 提取所有分类供筛选使用（保持原 category 逻辑）
         cat_counts = {}
         for r in results:
             cat = r['category']
             cat_counts[cat] = cat_counts.get(cat, 0) + 1
-
-        # 提取所有分类供筛选使用
         all_categories = sorted(list(cat_counts.keys()))
         cat_options = "".join([f'<option value="{c}">{c}</option>' for c in all_categories])
 
@@ -207,20 +250,15 @@ class StandaloneEvaluator:
             is_over_time = r['duration'] > self.time_threshold
             is_over_step = r['steps'] > self.step_threshold
 
-
-            # 假设 r['llm_eval_result'] 是一个字典或 JSON 字符串
             raw_data = r['llm_eval_result']
             if isinstance(raw_data, str):
-                # 如果是字符串，先转成对象再格式化，确保缩进有效
                 import ast
                 try:
-                    raw_data = json.loads(raw_data.replace("'", '"'))  # 尝试处理单引号问题
+                    raw_data = json.loads(raw_data.replace("'", '"'))
                 except:
                     raw_data = ast.literal_eval(raw_data)
 
-            # 转换为带缩进的漂亮格式
             formatted_json = json.dumps(raw_data, indent=4, ensure_ascii=False)
-            # 获取高亮版本
             highlighted_json = self.syntax_highlight_json(formatted_json)
 
             rows += f"""
@@ -254,11 +292,11 @@ class StandaloneEvaluator:
             <meta charset="UTF-8">
             <title>评估报告 - {self.root_dir_name}</title>
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
             <style>
                 body {{ font-family: "Segoe UI", sans-serif; padding: 20px; background: #f0f2f5; margin: 0; }}
                 .container {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 1600px; margin: auto; }}
 
-                /* 顶部统计和饼图布局 */
                 .top-section {{ display: flex; gap: 20px; margin-bottom: 25px; align-items: flex-start; }}
                 .stat-grid {{ flex: 3; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }}
                 .stat-item {{ background: #f8f9fa; border: 1px solid #e1e4e8; padding: 10px; border-radius: 8px; text-align: center; }}
@@ -266,66 +304,31 @@ class StandaloneEvaluator:
                 .stat-value {{ font-size: 20px; font-weight: bold; color: #1a73e8; }}
                 .val-fail {{ color: #d93025; }}
 
+                /* 恢复原始高度设定 */
                 .chart-container {{ flex: 1; background: #f8f9fa; border: 1px solid #e1e4e8; padding: 15px; border-radius: 8px; max-height: 280px; display: flex; flex-direction: column; align-items: center; }}
 
-                /* 筛选区域 */
-                .filter-bar {{ 
-                    background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 20px;
-                    display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 13px;
-                }}
+                .filter-bar {{ background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 13px; }}
                 .filter-group {{ display: flex; align-items: center; gap: 5px; }}
                 select {{ padding: 6px; border-radius: 4px; border: 1px solid #ccc; background: white; }}
-
                 .btn-reset {{ padding: 6px 12px; background: #5f6368; color: white; border: none; border-radius: 4px; cursor: pointer; }}
-                .btn-reset:hover {{ background: #3c4043; }}
-
-                /* 表格及固定表头 */
                 .table-wrapper {{ overflow: visible; }}
                 table {{ border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; table-layout: fixed; }}
-
-                /* 关键修复：固定表头所有列 */
-                th {{ 
-                    position: sticky; 
-                    top: 0; 
-                    background-color: #1a73e8; 
-                    color: white; 
-                    z-index: 100; 
-                    padding: 12px 10px;
-                    text-align: left;
-                    border-bottom: 2px solid #1557b0;
-                    user-select: none;
-                }}
-
+                th {{ position: sticky; top: 0; background-color: #1a73e8; color: white; z-index: 100; padding: 12px 10px; text-align: left; border-bottom: 2px solid #1557b0; user-select: none; }}
                 td {{ border-bottom: 1px solid #eef0f2; padding: 12px 10px; word-break: break-all; vertical-align: top; background: white; }}
-
                 .sortable {{ cursor: pointer; }}
-                .sortable:hover {{ background-color: #1557b0; }}
-
                 tr:nth-child(even) td {{ background-color: #fafafa; }}
                 tr:hover td {{ background-color: #f1f7ff; }}
-
                 img {{ border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.2s; }}
-                img:hover {{ transform: scale(1.02); }}
-
                 .copyable {{ cursor: pointer; color: #1a73e8; }}
                 .status-tip {{ margin-left: 5px; font-size: 12px; opacity: 0.6; }}
-
-                #backToTop {{
-                    position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px;
-                    background: #1a73e8; color: white; border: none; border-radius: 50%;
-                    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none; z-index: 1000;
-                    font-size: 20px;
-                }}
+                #backToTop {{ position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: #1a73e8; color: white; border: none; border-radius: 50%; cursor: pointer; display: none; z-index: 1000; font-size: 20px; }}
             </style>
         </head>
         <body>
             <div class="container">
                 <h1>📊 自动化评估报告</h1>
-                <p class="copyable" 
-                   style="color: #666; margin-top: -10px; cursor: pointer;" 
-                   onclick="copyAndNotify(this, '项目: {self.root_dir_name} | 生成于: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}')">
-                   项目: {self.root_dir_name} | 生成于: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-                   <span class="status-tip">📋</span>
+                <p class="copyable" style="color: #666; margin-top: -10px; cursor: pointer;" onclick="copyAndNotify(this, '项目: {self.root_dir_name}')">
+                   项目: {self.root_dir_name} | 生成于: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} <span class="status-tip">📋</span>
                 </p>
 
                 <div class="top-section">
@@ -364,9 +367,9 @@ class StandaloneEvaluator:
                                 <th style="width: 60px;">状态</th>
                                 <th style="width: 100px;">分类结果</th>
                                 <th style="width: 35%;">模型评判</th>
-                                <th class="sortable" onclick="sortTable(4, 'float')" style="width: 60px;">总耗时 ↕</th>
+                                <th class="sortable" onclick="sortTable(5, 'float')" style="width: 60px;">总耗时 ↕</th>
                                 <th style="width: 50px;">耗时过长</th>
-                                <th class="sortable" onclick="sortTable(6, 'int')" style="width: 50px;">总步数 ↕</th>
+                                <th class="sortable" onclick="sortTable(7, 'int')" style="width: 50px;">总步数 ↕</th>
                                 <th style="width: 50px;">步数过多</th>
                             </tr>
                         </thead>
@@ -379,34 +382,72 @@ class StandaloneEvaluator:
 
             <script>
                 // --- 饼图初始化 ---
-                const catData = {json.dumps(cat_counts, ensure_ascii=False)};
+                const errorData = {json.dumps(error_counts, ensure_ascii=False)};
+                const labels = Object.keys(errorData);
+                const counts = Object.values(errorData);
+
+                const colorMap = {{
+                    "成功": "#34a853",           // 绿色
+                    "处于报价预览页检查": "#ea4335", // 红色
+                    "destination_check": "#ff9900", // 橙色
+                    "未找到目的地信息": "#fbbc05",   // 黄色
+                    "llm_eval_mock": "#4285f4"     // 蓝色
+                }};
+                const backgroundColors = labels.map(label => colorMap[label] || '#' + Math.floor(Math.random()*16777215).toString(16));
+
                 const ctx = document.getElementById('categoryChart').getContext('2d');
+                Chart.register(ChartDataLabels);
+
                 new Chart(ctx, {{
                     type: 'pie',
                     data: {{
-                        labels: Object.keys(catData),
+                        labels: labels,
                         datasets: [{{
-                            data: Object.values(catData),
-                            backgroundColor: ['#34a853', '#ea4335', '#fbbc05', '#4285f4', '#9b59b6', '#34495e'],
+                            data: counts,
+                            backgroundColor: backgroundColors,
                             borderWidth: 1
                         }}]
                     }},
                     options: {{
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {{ legend: {{ position: 'right', labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }} }}
+                        plugins: {{
+                            legend: {{
+                                position: 'right',
+                                labels: {{
+                                    boxWidth: 10,
+                                    font: {{ size: 11 }},
+                                    generateLabels: function(chart) {{
+                                        const data = chart.data;
+                                        return data.labels.map((label, i) => ({{
+                                            text: `${{label}}: ${{data.datasets[0].data[i]}}`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            index: i
+                                        }}));
+                                    }}
+                                }}
+                            }},
+                            datalabels: {{
+                                color: '#fff',
+                                font: {{ weight: 'bold', size: 11 }},
+                                formatter: (value, ctx) => {{
+                                    let label = ctx.chart.data.labels[ctx.dataIndex];
+                                    return label + "\\n" + value;
+                                }},
+                                textAlign: 'center',
+                                display: true
+                            }}
+                        }}
                     }}
                 }});
 
-                // --- 逻辑功能 ---
+                // --- 其他功能代码保持不变 ---
                 let sortDirections = {{}};
-
                 function applyFilters() {{
                     const status = document.getElementById('f_status').value;
                     const category = document.getElementById('f_category').value;
                     const overtime = document.getElementById('f_overtime').value;
                     const overstep = document.getElementById('f_overstep').value;
-
                     document.querySelectorAll('#tableBody tr').forEach(row => {{
                         const mStatus = (status === 'all' || row.getAttribute('data-status') === status);
                         const mCategory = (category === 'all' || row.getAttribute('data-category') === category);
@@ -415,13 +456,11 @@ class StandaloneEvaluator:
                         row.style.display = (mStatus && mCategory && mOvertime && mOverstep) ? '' : 'none';
                     }});
                 }}
-
                 function sortTable(colIdx, type) {{
                     const tbody = document.getElementById('tableBody');
                     const rows = Array.from(tbody.rows);
                     sortDirections[colIdx] = !sortDirections[colIdx];
                     const dir = sortDirections[colIdx] ? 1 : -1;
-
                     rows.sort((a, b) => {{
                         let valA = a.cells[colIdx].getAttribute('data-val') || a.cells[colIdx].innerText.trim();
                         let valB = b.cells[colIdx].getAttribute('data-val') || b.cells[colIdx].innerText.trim();
@@ -430,14 +469,12 @@ class StandaloneEvaluator:
                     }});
                     rows.forEach(row => tbody.appendChild(row));
                 }}
-
                 function resetAll() {{
                     ['f_status', 'f_category', 'f_overtime', 'f_overstep'].forEach(id => document.getElementById(id).value = 'all');
                     applyFilters();
                     sortDirections = {{0: false}};
                     sortTable(0, 'string');
                 }}
-
                 function copyAndNotify(el, text) {{
                     navigator.clipboard.writeText(text).then(() => {{
                         const tip = el.querySelector('.status-tip');
@@ -445,7 +482,6 @@ class StandaloneEvaluator:
                         setTimeout(() => tip.innerText = '📋', 1000);
                     }});
                 }}
-
                 window.onscroll = () => {{
                     document.getElementById("backToTop").style.display = (window.scrollY > 300) ? "block" : "none";
                 }};

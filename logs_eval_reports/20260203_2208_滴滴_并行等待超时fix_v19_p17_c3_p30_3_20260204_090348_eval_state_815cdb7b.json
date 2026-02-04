@@ -1,0 +1,579 @@
+{
+    "uuid": "815cdb7b",
+    "start_time": "20260204_090348",
+    "root_dir": "20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3",
+    "processed_dirs": [
+        "20260203_220828_滴滴_Task001_民发天地东门",
+        "20260203_220914_滴滴_Task002_万达广场1号门",
+        "20260203_221002_滴滴_Task003_襄阳市第一人民医院东院区门诊",
+        "20260203_221046_滴滴_Task004_襄阳市第一人民医院东院区急诊",
+        "20260203_221131_滴滴_Task005_襄阳火车站出站口",
+        "20260203_221212_滴滴_Task006_襄阳东站北进站口",
+        "20260203_221259_滴滴_Task007_襄阳东站北出站口",
+        "20260203_221351_滴滴_Task008_勇士篮球总部",
+        "20260203_221442_滴滴_Task009_吾悦广场1号门",
+        "20260203_221527_滴滴_Task010_吾悦广场3号门",
+        "20260203_221611_滴滴_Task011_襄阳刘集机场国内出发",
+        "20260203_221656_滴滴_Task012_国投襄阳著",
+        "20260203_221741_滴滴_Task013_国投襄阳府",
+        "20260203_221826_滴滴_Task014_白马广场",
+        "20260203_221907_滴滴_Task015_民发天地东门",
+        "20260203_221948_滴滴_Task016_万达广场1号门",
+        "20260203_222030_滴滴_Task017_襄阳市第一人民医院东院区门诊",
+        "20260203_222115_滴滴_Task018_襄阳市第一人民医院东院区急诊",
+        "20260203_222203_滴滴_Task019_襄阳火车站出站口",
+        "20260203_222249_滴滴_Task020_襄阳东站北进站口",
+        "20260203_222335_滴滴_Task021_襄阳东站北出站口",
+        "20260203_222425_滴滴_Task022_勇士篮球总部",
+        "20260203_222513_滴滴_Task023_吾悦广场1号门",
+        "20260203_222600_滴滴_Task024_吾悦广场3号门",
+        "20260203_222646_滴滴_Task025_襄阳刘集机场国内出发",
+        "20260203_222732_滴滴_Task026_国投襄阳著",
+        "20260203_222819_滴滴_Task027_国投襄阳府",
+        "20260203_222905_滴滴_Task028_白马广场",
+        "20260203_222952_滴滴_Task029_民发天地东门",
+        "20260203_223035_滴滴_Task030_万达广场1号门"
+    ],
+    "results": [
+        {
+            "dir": "20260203_220828_滴滴_Task001_民发天地东门",
+            "task_name": "民发天地东门",
+            "status": "Success",
+            "category": "NONE",
+            "duration": 44.4,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_220828_滴滴_Task001_民发天地东门/screenshot_2026-02-03-79746-dcac0098_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "NONE"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_220914_滴滴_Task002_万达广场1号门",
+            "task_name": "万达广场1号门",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 45.9,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_220914_滴滴_Task002_万达广场1号门/screenshot_2026-02-03-79793-397f496c_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221002_滴滴_Task003_襄阳市第一人民医院东院区门诊",
+            "task_name": "襄阳市第一人民医院东院区门诊",
+            "status": "Success",
+            "category": "处于报价预览页检查",
+            "duration": 42.0,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221002_滴滴_Task003_襄阳市第一人民医院东院区门诊/screenshot_2026-02-03-79838-6fcbd966_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "处于报价预览页检查"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221046_滴滴_Task004_襄阳市第一人民医院东院区急诊",
+            "task_name": "襄阳市第一人民医院东院区急诊",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 43.7,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221046_滴滴_Task004_襄阳市第一人民医院东院区急诊/screenshot_2026-02-03-79884-e5f362eb_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221131_滴滴_Task005_襄阳火车站出站口",
+            "task_name": "襄阳火车站出站口",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 39.2,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221131_滴滴_Task005_襄阳火车站出站口/screenshot_2026-02-03-79924-5bda45de_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221212_滴滴_Task006_襄阳东站北进站口",
+            "task_name": "襄阳东站北进站口",
+            "status": "Success",
+            "category": "处于报价预览页检查",
+            "duration": 45.9,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221212_滴滴_Task006_襄阳东站北进站口/screenshot_2026-02-03-79971-c3022137_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "处于报价预览页检查"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221259_滴滴_Task007_襄阳东站北出站口",
+            "task_name": "襄阳东站北出站口",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 50.7,
+            "steps": 6,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221259_滴滴_Task007_襄阳东站北出站口/screenshot_2026-02-03-80024-634b83ef_6.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221351_滴滴_Task008_勇士篮球总部",
+            "task_name": "勇士篮球总部",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 48.9,
+            "steps": 6,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221351_滴滴_Task008_勇士篮球总部/screenshot_2026-02-03-80075-ae171244_6.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221442_滴滴_Task009_吾悦广场1号门",
+            "task_name": "吾悦广场1号门",
+            "status": "Success",
+            "category": "destination_check",
+            "duration": 42.8,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221442_滴滴_Task009_吾悦广场1号门/screenshot_2026-02-03-80119-4873bc44_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "destination_check"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221527_滴滴_Task010_吾悦广场3号门",
+            "task_name": "吾悦广场3号门",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 42.9,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221527_滴滴_Task010_吾悦广场3号门/screenshot_2026-02-03-80162-8bcda1d4_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221611_滴滴_Task011_襄阳刘集机场国内出发",
+            "task_name": "襄阳刘集机场国内出发",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 41.7,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221611_滴滴_Task011_襄阳刘集机场国内出发/screenshot_2026-02-03-80208-0103dc7c_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221656_滴滴_Task012_国投襄阳著",
+            "task_name": "国投襄阳著",
+            "status": "Success",
+            "category": "destination_check",
+            "duration": 43.9,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221656_滴滴_Task012_国投襄阳著/screenshot_2026-02-03-80253-52d9ff8b_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "destination_check"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221741_滴滴_Task013_国投襄阳府",
+            "task_name": "国投襄阳府",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 44.1,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221741_滴滴_Task013_国投襄阳府/screenshot_2026-02-03-80298-c43cd1c0_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221826_滴滴_Task014_白马广场",
+            "task_name": "白马广场",
+            "status": "Success",
+            "category": "NONE",
+            "duration": 39.4,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221826_滴滴_Task014_白马广场/screenshot_2026-02-03-80340-4b426a59_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "NONE"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221907_滴滴_Task015_民发天地东门",
+            "task_name": "民发天地东门",
+            "status": "Success",
+            "category": "NONE",
+            "duration": 39.6,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221907_滴滴_Task015_民发天地东门/screenshot_2026-02-03-80380-0cca5757_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "NONE"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_221948_滴滴_Task016_万达广场1号门",
+            "task_name": "万达广场1号门",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 40.8,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_221948_滴滴_Task016_万达广场1号门/screenshot_2026-02-03-80422-96e098ac_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222030_滴滴_Task017_襄阳市第一人民医院东院区门诊",
+            "task_name": "襄阳市第一人民医院东院区门诊",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 43.2,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222030_滴滴_Task017_襄阳市第一人民医院东院区门诊/screenshot_2026-02-03-80465-55efb6ec_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222115_滴滴_Task018_襄阳市第一人民医院东院区急诊",
+            "task_name": "襄阳市第一人民医院东院区急诊",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 46.4,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222115_滴滴_Task018_襄阳市第一人民医院东院区急诊/screenshot_2026-02-03-80512-df275990_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222203_滴滴_Task019_襄阳火车站出站口",
+            "task_name": "襄阳火车站出站口",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 44.4,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222203_滴滴_Task019_襄阳火车站出站口/screenshot_2026-02-03-80562-f29fd77e_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222249_滴滴_Task020_襄阳东站北进站口",
+            "task_name": "襄阳东站北进站口",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 44.0,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222249_滴滴_Task020_襄阳东站北进站口/screenshot_2026-02-03-80606-422c24b4_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222335_滴滴_Task021_襄阳东站北出站口",
+            "task_name": "襄阳东站北出站口",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 47.9,
+            "steps": 6,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222335_滴滴_Task021_襄阳东站北出站口/screenshot_2026-02-03-80657-2a5d0849_6.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222425_滴滴_Task022_勇士篮球总部",
+            "task_name": "勇士篮球总部",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 47.3,
+            "steps": 6,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222425_滴滴_Task022_勇士篮球总部/screenshot_2026-02-03-80706-b81f032b_6.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222513_滴滴_Task023_吾悦广场1号门",
+            "task_name": "吾悦广场1号门",
+            "status": "Success",
+            "category": "NONE",
+            "duration": 44.7,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222513_滴滴_Task023_吾悦广场1号门/screenshot_2026-02-03-80751-4785a4ed_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "NONE"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222600_滴滴_Task024_吾悦广场3号门",
+            "task_name": "吾悦广场3号门",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 44.5,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222600_滴滴_Task024_吾悦广场3号门/screenshot_2026-02-03-80797-14463a11_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222646_滴滴_Task025_襄阳刘集机场国内出发",
+            "task_name": "襄阳刘集机场国内出发",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 44.6,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222646_滴滴_Task025_襄阳刘集机场国内出发/screenshot_2026-02-03-80844-1e15f62d_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222732_滴滴_Task026_国投襄阳著",
+            "task_name": "国投襄阳著",
+            "status": "Success",
+            "category": "llm_eval_mock",
+            "duration": 43.7,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222732_滴滴_Task026_国投襄阳著/screenshot_2026-02-03-80891-95d1b847_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "llm_eval_mock"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222819_滴滴_Task027_国投襄阳府",
+            "task_name": "国投襄阳府",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 44.3,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222819_滴滴_Task027_国投襄阳府/screenshot_2026-02-03-80937-d36b75ec_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222905_滴滴_Task028_白马广场",
+            "task_name": "白马广场",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 46.1,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222905_滴滴_Task028_白马广场/screenshot_2026-02-03-80983-6424ea16_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_222952_滴滴_Task029_民发天地东门",
+            "task_name": "民发天地东门",
+            "status": "Success",
+            "category": "处于报价预览页检查",
+            "duration": 41.2,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_222952_滴滴_Task029_民发天地东门/screenshot_2026-02-03-81028-31f52498_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "处于报价预览页检查"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        },
+        {
+            "dir": "20260203_223035_滴滴_Task030_万达广场1号门",
+            "task_name": "万达广场1号门",
+            "status": "Success",
+            "category": "未找到目的地信息",
+            "duration": 42.3,
+            "steps": 5,
+            "img": "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3/20260203_223035_滴滴_Task030_万达广场1号门/screenshot_2026-02-03-81071-1ee067f8_5.png",
+            "eval_at": "09:03:48",
+            "llm_eval_result": {
+                "final_decision": {
+                    "reason": "llm_eval_mock",
+                    "decision": "SUCCESS",
+                    "error_type": "未找到目的地信息"
+                }
+            },
+            "llm_eval_result_decision": "SUCCESS"
+        }
+    ]
+}
