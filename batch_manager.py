@@ -127,6 +127,12 @@ class BatchAgentRunner:
 
 
 if __name__ == "__main__":
+    tag = "总总程序"
+    program_start_time = datetime.now()
+    print(f"{tag}开始时间：")
+    print(program_start_time.strftime("%Y-%m-%d %H:%M:%S"))
+    # 程序占位
+
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     # 构造符合你要求的 log 目录名
     BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_并行等待超时fix_v19_p17_c3_p30_6"
@@ -137,3 +143,10 @@ if __name__ == "__main__":
     print("\n[📊 正在启动自动评估...]")
     report_path = StandaloneEvaluator.quick_eval(BASE_LOG_DIR)
     print(f"✨ 所有流程已完成。报告：{report_path}")
+
+    program_end_time = datetime.now()
+    duration = program_end_time - program_start_time
+    print(f"{tag}开始时间: {program_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{tag}结束时间: {program_end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{tag}运行耗时: {str(duration)[:-5]}")  # 时分秒格式
+    print(f"{tag}运行耗时秒: {duration.total_seconds():.1f} 秒")

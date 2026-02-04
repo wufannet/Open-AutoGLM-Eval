@@ -21,7 +21,7 @@ if not API_KEY:
     sys.exit(1)
 
 # ==================== 默认配置 ====================
-DEFAULT_LOGS_ROOT = "./logs_eval/20260204_171255_滴滴_并行等待超时fix_v19_p17_c3_p30_5"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
 EVAL_STORE = "./logs_eval_reports"
 MAX_WORKERS = 1
 
@@ -539,9 +539,24 @@ class StandaloneEvaluator:
 
 
 if __name__ == "__main__":
+    # 程序开始时间
+    tag = "总总程序"
+    program_start_time = datetime.now()
+    print(f"{tag}开始时间：")
+    print(program_start_time.strftime("%Y-%m-%d %H:%M:%S"))
+
+    # 程序占位
     parser = argparse.ArgumentParser()
     parser.add_argument("--logs_root", type=str)
     parser.add_argument("--uuid", type=str)
     args = parser.parse_args()
     evaluator = StandaloneEvaluator(logs_root=args.logs_root, run_uuid=args.uuid, is_mock=False)
     evaluator.run()
+
+    program_end_time = datetime.now()
+    duration = program_end_time - program_start_time
+    print(f"{tag}开始时间: {program_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{tag}结束时间: {program_end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{tag}运行耗时: {str(duration)[:-5]}")  # 时分秒格式
+    print(f"{tag}运行耗时秒: {duration.total_seconds():.1f} 秒")
+
