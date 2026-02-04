@@ -379,8 +379,10 @@ def parse_action(response: str) -> dict[str, Any]:
         ValueError: If the response cannot be parsed.
     """
     print(f"Parsing action: {response}")
+    response_old = response
     response = response.replace("Tap element", '"Tap", element').strip()
-    print(f"replace action: {response}")
+    if response_old != response:
+        print(f"response_old != response replace action: {response}")
 
     try:
         response = response.strip()

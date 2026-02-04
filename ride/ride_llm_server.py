@@ -59,7 +59,8 @@ class RideLlmServer(object):
             print(f"{LOG_TAG} total_tokens: {operator_usage['total_tokens']}")
 
         if not raw_response:
-            raise RuntimeError('Error calling LLM in operator phase.')
+            # raise RuntimeError('Error calling LLM in operator phase.')
+            return None
         try:
             output_action = output_action.replace("```", "").replace("json", "").strip()
             result = json.loads(output_action)
