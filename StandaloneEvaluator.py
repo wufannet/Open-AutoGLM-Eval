@@ -298,14 +298,14 @@ class StandaloneEvaluator:
                 .container {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 1600px; margin: auto; }}
 
                 .top-section {{ display: flex; gap: 20px; margin-bottom: 25px; align-items: flex-start; }}
-                .stat-grid {{ flex: 3; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }}
-                .stat-item {{ background: #f8f9fa; border: 1px solid #e1e4e8; padding: 10px; border-radius: 8px; text-align: center; }}
+                .stat-grid {{ flex: 3; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }}
+                .stat-item {{ background: #f8f9fa; border: 1px solid #e1e4e8; padding: 8px; border-radius: 8px; text-align: center; }}
                 .stat-label {{ font-size: 12px; color: #666; margin-bottom: 5px; }}
                 .stat-value {{ font-size: 20px; font-weight: bold; color: #1a73e8; }}
                 .val-fail {{ color: #d93025; }}
 
                 /* 恢复原始高度设定 */
-                .chart-container {{ flex: 1; background: #f8f9fa; border: 1px solid #e1e4e8; padding: 15px; border-radius: 8px; max-height: 280px; display: flex; flex-direction: column; align-items: center; }}
+                .chart-container {{ flex: 1.5; background: #f8f9fa; border: 1px solid #e1e4e8; padding: 5px; border-radius: 8px; max-height: 310px; display: flex; flex-direction: column; align-items: center; }}
 
                 .filter-bar {{ background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 13px; }}
                 .filter-group {{ display: flex; align-items: center; gap: 5px; }}
@@ -344,7 +344,7 @@ class StandaloneEvaluator:
                     </div>
 
                     <div class="chart-container">
-                        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">分类结果分布</div>
+                        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">分类饼图</div>
                         <canvas id="categoryChart"></canvas>
                     </div>
                 </div>
