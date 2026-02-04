@@ -21,13 +21,13 @@ if not API_KEY:
     sys.exit(1)
 
 # ==================== 默认配置 ====================
-DEFAULT_LOGS_ROOT = "./logs_eval/20260203_2208_滴滴_并行等待超时fix_v19_p17_c3_p30_3"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260204_171255_滴滴_并行等待超时fix_v19_p17_c3_p30_5"
 EVAL_STORE = "./logs_eval_reports"
 MAX_WORKERS = 1
 
 
 class StandaloneEvaluator:
-    def __init__(self, logs_root=None, run_uuid=None, time_threshold=50.0, step_threshold=8):
+    def __init__(self, logs_root=None, run_uuid=None, time_threshold=50.0, step_threshold=8, is_mock = False):
         self.log_root = (logs_root or DEFAULT_LOGS_ROOT).rstrip('/')
         self.store_path = EVAL_STORE
         if not os.path.exists(self.store_path):
@@ -47,6 +47,7 @@ class StandaloneEvaluator:
         self.state = self._load_state()
         self.lock = threading.Lock()
         self.llmServer = RideLlmServer(API_KEY, "https://open.bigmodel.cn/api/paas/v4", "glm-4.6v-flash")
+        self.is_mock = is_mock
 
     @staticmethod
     def quick_eval(logs_path):
@@ -92,8 +93,13 @@ class StandaloneEvaluator:
         if match:
             destination = match.group(1)
             print(f"提取的目的地为: {destination}")
-            result = self.llmServer.request(
-                {"image_dir": img_path, "app_name": "滴滴", "LOG_TAG": "didi_eval", "prompt": Prompt.didi_eval_v3+destination})
+            result = None
+            n = 0
+            while result is None and n < 3:
+                n+=1
+                result = self.llmServer.request(
+                    {"image_dir": img_path, "app_name": "滴滴", "LOG_TAG": "didi_eval",
+                     "prompt": Prompt.didi_eval_v3 + destination})
             if not result:
                 result = {
                     'final_decision': {'reason': 'request failed', 'decision': 'FAILED',
@@ -149,8 +155,11 @@ class StandaloneEvaluator:
 
             is_success = data.get("result_type") == 1
             # category = "成功" if is_success else self.mock_llm_classify(data.get("final_img"))
-            # llm_eval_result = self.llm_eval(data.get("final_img"),data)
-            llm_eval_result = self.llm_eval_mock(data.get("final_img"),data)
+            if not self.is_mock:
+                llm_eval_result = self.llm_eval(data.get("final_img"), data)
+            else:
+                llm_eval_result = self.llm_eval_mock(data.get("final_img"), data)
+
             # {'is_on_call_page': {'decision': 'SUCCESS'}, 'price_list_check': {'decision': 'SUCCESS'}, 'destination_check': {'decision': 'FAILED'},
             # 'final_decision': {'reason': '', 'decision': 'FAILED', 'error_type': 'destination_check'}}
             res = {
@@ -534,5 +543,5 @@ if __name__ == "__main__":
     parser.add_argument("--logs_root", type=str)
     parser.add_argument("--uuid", type=str)
     args = parser.parse_args()
-    evaluator = StandaloneEvaluator(logs_root=args.logs_root, run_uuid=args.uuid)
+    evaluator = StandaloneEvaluator(logs_root=args.logs_root, run_uuid=args.uuid, is_mock=False)
     evaluator.run()
