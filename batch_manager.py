@@ -127,8 +127,10 @@ class BatchAgentRunner:
 
 
 if __name__ == "__main__":
-    BASE_LOG_DIR = "./logs_eval/20260131_1704_滴滴_并行生成多次_v17_p17_c1_p30_1"
-    RUN_COUNT = 20
+    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # 构造符合你要求的 log 目录名
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_并行等待超时fix_v19_p17_c3_p30_6"
+    RUN_COUNT = 30
     runner = BatchAgentRunner()
     runner.start()
     # 2. 任务结束后直接调用评估 (传入刚才定义的 BASE_LOG_DIR)
