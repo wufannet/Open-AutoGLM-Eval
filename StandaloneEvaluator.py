@@ -381,65 +381,89 @@ class StandaloneEvaluator:
             <button id="backToTop" onclick="window.scrollTo({{top: 0, behavior: 'smooth'}})">↑</button>
 
             <script>
-                // --- 饼图初始化 ---
-                const errorData = {json.dumps(error_counts, ensure_ascii=False)};
-                const labels = Object.keys(errorData);
-                const counts = Object.values(errorData);
+               // --- 饼图初始化 ---
+            const rawData = {json.dumps(error_counts, ensure_ascii=False)};
+            
+            // 固定排序顺序
+            const fixedOrder = [
+                "成功", 
+                "处于报价预览页检查", 
+                "destination_check", 
+                "未找到目的地信息", 
+                "llm_eval_mock"
+            ];
 
-                const colorMap = {{
-                    "成功": "#34a853",           // 绿色
-                    "处于报价预览页检查": "#ea4335", // 红色
-                    "destination_check": "#ff9900", // 橙色
-                    "未找到目的地信息": "#fbbc05",   // 黄色
-                    "llm_eval_mock": "#4285f4"     // 蓝色
-                }};
-                const backgroundColors = labels.map(label => colorMap[label] || '#' + Math.floor(Math.random()*16777215).toString(16));
+            const finalLabels = [];
+            const finalCounts = [];
 
-                const ctx = document.getElementById('categoryChart').getContext('2d');
-                Chart.register(ChartDataLabels);
+            // 按固定顺序填充数据
+            fixedOrder.forEach(key => {{
+                if (rawData[key] !== undefined) {{
+                    finalLabels.push(key);
+                    finalCounts.push(rawData[key]);
+                    delete rawData[key];
+                }}
+            }});
+            // 补充未在固定顺序中的其他分类
+            Object.keys(rawData).forEach(key => {{
+                finalLabels.push(key);
+                finalCounts.push(rawData[key]);
+            }});
 
-                new Chart(ctx, {{
-                    type: 'pie',
-                    data: {{
-                        labels: labels,
-                        datasets: [{{
-                            data: counts,
-                            backgroundColor: backgroundColors,
-                            borderWidth: 1
-                        }}]
-                    }},
-                    options: {{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {{
-                            legend: {{
-                                position: 'right',
-                                labels: {{
-                                    boxWidth: 10,
-                                    font: {{ size: 11 }},
-                                    generateLabels: function(chart) {{
-                                        const data = chart.data;
-                                        return data.labels.map((label, i) => ({{
-                                            text: `${{label}}: ${{data.datasets[0].data[i]}}`,
-                                            fillStyle: data.datasets[0].backgroundColor[i],
-                                            index: i
-                                        }}));
-                                    }}
+            const colorMap = {{
+                "成功": "#34a853",           
+                "处于报价预览页检查": "#ea4335", 
+                "destination_check": "#ff9900", 
+                "未找到目的地信息": "#fbbc05",   
+                "llm_eval_mock": "#4285f4"     
+            }};
+            const backgroundColors = finalLabels.map(label => colorMap[label] || '#' + Math.floor(Math.random()*16777215).toString(16));
+
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            Chart.register(ChartDataLabels);
+
+            new Chart(ctx, {{
+                type: 'pie',
+                data: {{
+                    labels: finalLabels,
+                    datasets: [{{
+                        data: finalCounts,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 1
+                    }}]
+                }},
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {{
+                        legend: {{
+                            position: 'right',
+                            labels: {{
+                                boxWidth: 10,
+                                font: {{ size: 11 }},
+                                generateLabels: function(chart) {{
+                                    const data = chart.data;
+                                    return data.labels.map((label, i) => ({{
+                                        text: `${{label}}: ${{data.datasets[0].data[i]}}`,
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        index: i
+                                    }}));
                                 }}
-                            }},
-                            datalabels: {{
-                                color: '#fff',
-                                font: {{ weight: 'bold', size: 11 }},
-                                formatter: (value, ctx) => {{
-                                    let label = ctx.chart.data.labels[ctx.dataIndex];
-                                    return label + "\\n" + value;
-                                }},
-                                textAlign: 'center',
-                                display: true
                             }}
+                        }},
+                        datalabels: {{
+                            color: '#fff',
+                            font: {{ weight: 'bold', size: 11 }},
+                            formatter: (value, ctx) => {{
+                                let label = ctx.chart.data.labels[ctx.dataIndex];
+                                return label + "\\n" + value;
+                            }},
+                            textAlign: 'center',
+                            display: true
                         }}
                     }}
-                }});
+                }}
+            }});
 
                 // --- 其他功能代码保持不变 ---
                 let sortDirections = {{}};
