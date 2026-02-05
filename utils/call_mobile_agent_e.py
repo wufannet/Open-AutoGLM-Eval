@@ -18,12 +18,27 @@ def pil_to_base64(image):
 def image_to_base64(image_path):
     dummy_image = Image.open(image_path)
     MIN_PIXELS=3136
-    MAX_PIXELS=10035200
-    resized_height, resized_width  = smart_resize(dummy_image.height,
-        dummy_image.width,
-        factor=28,
-        min_pixels=MIN_PIXELS,
-        max_pixels=MAX_PIXELS,)
+    MAX_PIXELS=10035200 #1000完,相当于 3K * 3k 分辨率
+    # resized_height, resized_width  = smart_resize(dummy_image.height,
+    #     dummy_image.width,
+    #     factor=28,
+    #     min_pixels=MIN_PIXELS,
+    #     max_pixels=MAX_PIXELS,)
+    # 图片判别缩放,720就不缩放了,优先保证准确率.1080 的缩放下
+    if dummy_image.width > 1080:
+        resized_height, resized_width = int(dummy_image.height/2), int(dummy_image.width/2)
+    # elif dummy_image.width >= 720:
+    #     resized_height, resized_width = int(dummy_image.height*0.75), int(dummy_image.width * 0.75)
+    else:
+        resized_height, resized_width = dummy_image.width, dummy_image.height
+
+
+
+    # resized_height, resized_width = 780, 360 #1560 720
+    # resized_height, resized_width = 1560, 720 #1560 720
+    # resized_height, resized_width = 1200, 540
+
+    print(f"image_to_base64 resized_height resized_width {resized_height} {resized_width} ")
     dummy_image = dummy_image.resize((resized_width, resized_height))
     return f"data:image/png;base64,{pil_to_base64(dummy_image)}"
 
@@ -134,7 +149,7 @@ class GUIOwlWrapper(LlmWrapper, MultimodalLlmWrapper):
                   model=self.model,
                   messages=payload,
                   temperature=0,
-                  top_p=1,
+                  # top_p=1,
               )
               return (chat_completion_from_url.choices[0].message.content, payload, chat_completion_from_url)
             except Exception as e:
