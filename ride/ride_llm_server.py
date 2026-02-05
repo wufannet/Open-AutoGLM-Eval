@@ -39,6 +39,7 @@ class RideLlmServer(object):
             prompt,
             [image_dir],
         )
+        print('raw_response 开始:\n' + str(raw_response) + '\nraw_response结束\n')
         response_end_time = datetime.datetime.now()
         request_duration = (response_end_time - request_start_time).total_seconds()
         print(f"{LOG_TAG} 请求开始时间: {request_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
