@@ -24,6 +24,7 @@ class RideLlmServer(object):
         prompt = data['prompt']
         # target = data['target']
         print(f"\n###=== {LOG_TAG} {app_name} {self.model_name} === ###")
+        print(f"提示词:\n{prompt}\n")
         # 获取当前方法名
         import inspect
         method_name = inspect.currentframe().f_code.co_name

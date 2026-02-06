@@ -80,6 +80,20 @@ def get_screenshot(device_id: str | None = None, timeout: int = 10,local_image_d
         img = Image.open(temp_path)
         width, height = img.size
 
+        if width >= 1080:
+            resized_height, resized_width = int(height / 2), int(width / 2)
+        # elif dummy_image.width >= 720:
+        #     resized_height, resized_width = int(dummy_image.height*0.75), int(dummy_image.width * 0.75)
+        else:
+            resized_height, resized_width = width, height
+
+        # resized_height, resized_width = 780, 360 #1560 720
+        # resized_height, resized_width = 1560, 720 #1560 720
+        # resized_height, resized_width = 1200, 540
+
+        print(f"image_to_base64 resized_height resized_width {resized_height} {resized_width} ")
+        img = img.resize((resized_width, resized_height))
+
         buffered = BytesIO()
         img.save(buffered, format="PNG")
         base64_data = base64.b64encode(buffered.getvalue()).decode("utf-8")
