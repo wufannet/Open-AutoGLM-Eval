@@ -25,7 +25,7 @@ def image_to_base64(image_path):
     #     min_pixels=MIN_PIXELS,
     #     max_pixels=MAX_PIXELS,)
     # 图片判别缩放,720就不缩放了,优先保证准确率.1080 的缩放下
-    if dummy_image.width > 1080:
+    if dummy_image.width >= 1080:
         resized_height, resized_width = int(dummy_image.height/2), int(dummy_image.width/2)
     # elif dummy_image.width >= 720:
     #     resized_height, resized_width = int(dummy_image.height*0.75), int(dummy_image.width * 0.75)
