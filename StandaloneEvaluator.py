@@ -21,7 +21,9 @@ if not API_KEY:
     sys.exit(1)
 
 # ==================== 默认配置 ====================
-DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
+# DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
+# DEFAULT_LOGS_ROOT = "./logs_eval/20260131_1704_滴滴_并行生成多次_v17_p17_c1_p30_1"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260206_152843_滴滴_解决模型评估地址错误_v19_p17_c3_小米10_3"
 EVAL_STORE = "./logs_eval_reports"
 MAX_WORKERS = 1
 
@@ -47,6 +49,7 @@ class StandaloneEvaluator:
         self.state = self._load_state()
         self.lock = threading.Lock()
         self.llmServer = RideLlmServer(API_KEY, "https://open.bigmodel.cn/api/paas/v4", "glm-4.6v-flash")
+        # self.llmServer = RideLlmServer(API_KEY, "https://open.bigmodel.cn/api/paas/v4", "glm-4.1v-thinking-flash")
         self.is_mock = is_mock
 
     @staticmethod
@@ -99,7 +102,7 @@ class StandaloneEvaluator:
                 n+=1
                 result = self.llmServer.request(
                     {"image_dir": img_path, "app_name": "滴滴", "LOG_TAG": "didi_eval",
-                     "prompt": Prompt.didi_eval_v3 + destination})
+                     "prompt": Prompt.didi_eval_use + destination})
             if not result:
                 result = {
                     'final_decision': {'reason': 'request failed', 'decision': 'FAILED',

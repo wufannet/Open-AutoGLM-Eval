@@ -420,7 +420,7 @@ class PhoneAgent:
         device_factory = get_device_factory()
         current_time = datetime.now()
         formatted_time = current_time.strftime(
-            f'%Y-%m-%d_%H-%M-%S_{current_time.hour * 3600 + current_time.minute * 60 + current_time.second}_{str(uuid.uuid4().hex[:8])}')
+            f'%Y-%m-%d_%H-%M-%S_{str(uuid.uuid4().hex[:8])}')
         # # 格式1：2026-02-04_15-30-20（基础版，可读性最佳）
         #  strftime("%Y-%m-%d_%H-%M-%S") 截图文件名加入时分秒,同时看时分秒,同时后面当天秒的整数方便计算下一步耗时多少
         local_image_dir = os.path.join(image_save_path, f"screenshot_{formatted_time}_{self._step_count}.png")
