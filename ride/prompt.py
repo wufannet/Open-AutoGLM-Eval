@@ -196,6 +196,7 @@ JSON
 """
 
     #didi_eval_v4 error_type 设为 "NONE"。 解决问题: error_type要求返回成功,返回 NONE //长期用过 ,地址语义匹配高准确率
+    #v4 评估 v19 没有错杀,但是评估 v15 错杀 2 个,错放3 个,还是还原到 v10
     didi_eval_v4 = """Role: 你是一名高级移动端 QA 自动化审计专家，专门负责对 GUI Agent 执行的“滴滴打车”任务结果进行最终判定。
 Task: 根据用户提供的【任务指令】和 Agent 执行结束后的【最终截图】，分析任务是否按要求完成。
 Evaluation Logic (Thinking Process): 在生成 JSON 之前，请按以下步骤在 Thinking Process 阶段进行深入分析：
@@ -381,7 +382,7 @@ JSON 模板示例：
        ### 第一阶段：视觉感知（感知优先级最高）
        不要进行任何逻辑推断，请仅根据像素特征提取以下信息：
        1. 寻找地图上的【绿色圆点】：提取其旁边白色气泡内的文字，存入 starting_point。
-       2. 寻找地图上的【橙色/黄色圆点】：提取其旁边白色气泡内的文字，存入 destination。
+       2. 寻找地图上的【橙色圆点】：提取其旁边白色气泡内的文字，存入 destination。
        *注意：严禁输出“当前位置”或“定位点”，必须原样提取文字。*
 
        ### 第二阶段：审计判定
@@ -408,6 +409,38 @@ JSON 模板示例：
 
        ### 任务指令
            1.终点地址是"""
+
+    didi_eval_v9_1 = """Role: 你是一名高级移动端 QA 审计专家。你必须严格按照【先提取、后判断】的逻辑执行任务。
+
+          ### 第一阶段：视觉感知（感知优先级最高）
+          不要进行任何逻辑推断，请仅根据像素特征提取以下信息：
+          1. 寻找地图上的【绿色圆点】：提取其旁边白色气泡内的文字，存入 starting_point。
+          2. 寻找地图上的【橙色圆点】：提取其旁边白色气泡内的文字，存入 destination。
+
+          ### 第二阶段：审计判定
+          1. 处于报价预览页检查： UI 底部是否显示了预估价格区域及呼叫按钮。
+          2. destination_check：将识别到的终点地址与指令要求的终点地址进行文本语义匹配分析(不要求文本完全相同,语义判断是一个地方就行,如简称和全称判断为相同地址,带分割线和分割点的和不带的也判断为相同地址,如带城市名和不带城市名判断为相同地址）。
+
+          ### 输出格式（严格 JSON）
+          {
+            "perception_data": {
+              "starting_point": "提取到的原始起点文字",
+              "destination": "提取到的原始终点文字"
+            },
+            "处于报价预览页检查": {
+              "decision": "SUCCESS or FAILED"
+            },
+            "destination_check": {
+              "decision": "SUCCESS or FAILED"
+            },
+            "final_decision": {
+              "decision": "SUCCESS or FAILED",
+              "error_type": "NONE (若成功) 或第一个FAILED的检查项的Key (如处于报价预览页检查)"
+            }
+          }
+
+          ### 任务指令
+              1.终点地址是"""
 
     #尝试解决地址取反,gemini pro重新生成
     DIDI_EVAL_V10_ANTI_REVERSAL = """
@@ -501,8 +534,8 @@ JSON 模板示例：
         """
 
     #当前版本 didi_eval_v9 解决勇士篮球总部 与 勇士少年篮球总部不匹配问题
-    #最终统计:
-    didi_eval_use = didi_eval_v4
+    #didi_eval_v4:
+    didi_eval_use = didi_eval_v9
 
     #didi_address_eval_v1 提取出起点地址和终点地址的提示词 只提取地址,gemini生成提示词
 
