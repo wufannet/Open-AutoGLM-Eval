@@ -295,7 +295,7 @@ JSON
   "final_decision": {
     "reason": "综合判定理由",
     "decision": "SUCCESS or FAILED",
-    "error_type": "NONE 或 具体的检查项 Key"
+    "error_type": "NONE (若成功) 或第一个FAILED的检查项的Key (如处于报价预览页检查)"
   }
 }
 
@@ -332,14 +332,14 @@ JSON
       "final_decision": {
         "reason": "综合判定理由",
         "decision": "SUCCESS or FAILED",
-        "error_type": "NONE 或 具体的检查项 Key"
+        "error_type": "NONE (若成功) 或第一个FAILED的检查项的Key (如处于报价预览页检查)"
       }
     }
 
     ### 任务指令
         1.终点地址是"""
 
-    # didi_eval_v7 json格式不需要不要推理过程,看来现推理后输出 json,还是要做分离模式.不能输出到 json中.
+    # didi_eval_v8 json格式不要全部推理过程,看来现推理后输出 json,还是要做分离模式.不能输出到 json中.
     #最终统计: 成功 20/20 | 通过率: 100.00% 18秒
     didi_eval_v3 = """Role: 你是一名高级移动端 QA 审计专家。你必须严格按照【先提取、后判断】的逻辑执行任务。
 
@@ -367,7 +367,7 @@ JSON
          },
          "final_decision": {
            "decision": "SUCCESS or FAILED",
-           "error_type": "NONE 或 具体的检查项 Key"
+           "error_type": "NONE (若成功) 或第一个FAILED的检查项的Key (如处于报价预览页检查)"
          }
        }
 
