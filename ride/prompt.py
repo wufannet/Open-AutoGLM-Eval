@@ -195,7 +195,7 @@ JSON
 1.终点地址是
 """
 
-    #didi_eval_v4 error_type 设为 "NONE"。 解决问题: error_type要求返回成功,返回 NONE //长期用过
+    #didi_eval_v4 error_type 设为 "NONE"。 解决问题: error_type要求返回成功,返回 NONE //长期用过 ,地址语义匹配高准确率
     didi_eval_v4 = """Role: 你是一名高级移动端 QA 自动化审计专家，专门负责对 GUI Agent 执行的“滴滴打车”任务结果进行最终判定。
 Task: 根据用户提供的【任务指令】和 Agent 执行结束后的【最终截图】，分析任务是否按要求完成。
 Evaluation Logic (Thinking Process): 在生成 JSON 之前，请按以下步骤在 Thinking Process 阶段进行深入分析：
@@ -204,7 +204,6 @@ destination_check：地图中的被路线中到达方向指向的橙色定位地
 归因分析：如果任务失败，定位到是哪一个检查项最先出错，并归纳错误原因。
 Output Requirement: 请严格遵守以下输出格式：输出一个标准的 JSON 代码块。
 JSON 模板示例：
-JSON
 {
   "处于报价预览页检查": {
     "reason": "一句话简短描述当前 UI 是否处于报价预览页,处于就是成功",
