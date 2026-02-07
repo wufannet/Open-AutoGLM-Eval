@@ -23,9 +23,11 @@ if not API_KEY:
 # ==================== 默认配置 ====================
 # DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
 # DEFAULT_LOGS_ROOT = "./logs_eval/20260131_1704_滴滴_并行生成多次_v17_p17_c1_p30_1"
-DEFAULT_LOGS_ROOT = "./logs_eval/20260206_152843_滴滴_解决模型评估地址错误_v19_p17_c3_小米10_3"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260206_182101_滴滴_压缩截图_v20_p17_c4_小米10_1"
 EVAL_STORE = "./logs_eval_reports"
 MAX_WORKERS = 1
+eval_version = "didi_eval_v9_2"
+eval_prompt = Prompt.didi_eval_v9_2
 
 
 class StandaloneEvaluator:
@@ -43,8 +45,8 @@ class StandaloneEvaluator:
         self.run_uuid = run_uuid if run_uuid else str(uuid.uuid4())[:8]
 
         base_filename = f"{self.root_dir_name}_{self.start_run_time}"
-        self.state_file = os.path.join(self.store_path, f"{base_filename}_eval_state_{self.run_uuid}.json")
-        self.html_file = os.path.join(self.store_path, f"{base_filename}_report_{self.run_uuid}.html")
+        self.state_file = os.path.join(self.store_path, f"{base_filename}_{eval_version}_eval_state_{self.run_uuid}.json")
+        self.html_file = os.path.join(self.store_path, f"{base_filename}_{eval_version}_report_{self.run_uuid}.html")
 
         self.state = self._load_state()
         self.lock = threading.Lock()

@@ -13,7 +13,7 @@ if not API_KEY:
 
 llmServer = RideLlmServer(API_KEY, "https://open.bigmodel.cn/api/paas/v4",   "glm-4.6v-flash")
 image_dir = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1/20260129_172253_滴滴_Task029_民发天地东门/screenshot_2026-01-29-62688-3041eeb7_15.png"
-result = llmServer.request({"image_dir": image_dir, "app_name": "滴滴","LOG_TAG": "didi_eval", "prompt": Prompt.didi_eval_v3+"民发天地东门"})
+result = llmServer.request({"image_dir": image_dir, "app_name": "滴滴","LOG_TAG": "didi_eval", "prompt": Prompt.didi_eval_use + "民发天地东门"})
 if not result:
     result = { 'final_decision': {'reason': 'request failed','decision': 'FAILED', 'error_type': 'request failed'}}
 

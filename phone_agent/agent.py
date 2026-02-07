@@ -1,6 +1,7 @@
 """Main PhoneAgent class for orchestrating phone automation."""
 
 import json
+import sys
 import traceback
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -572,3 +573,91 @@ class PhoneAgent:
     def step_count(self) -> int:
         """Get the current step count."""
         return self._step_count
+
+    def run_step_replay_return1(
+            self, user_prompt: str | None = None, is_first: bool = False, image_save_path: str = "",data_path: str = ""
+    )-> ModelResponse:
+        """Execute a single step of the agent loop."""
+        self._step_count += 1
+
+        # Capture current screen state
+        # device_factory = get_device_factory()
+        current_time = datetime.now()
+        formatted_time = current_time.strftime(
+            f'%Y-%m-%d_%H-%M-%S_{str(uuid.uuid4().hex[:8])}')
+        # # 格式1：2026-02-04_15-30-20（基础版，可读性最佳）
+        #  strftime("%Y-%m-%d_%H-%M-%S") 截图文件名加入时分秒,同时看时分秒,同时后面当天秒的整数方便计算下一步耗时多少
+        local_image_dir = os.path.join(image_save_path, f"screenshot_{formatted_time}_{self._step_count}.png")
+        # screenshot = device_factory.get_screenshot(self.agent_config.device_id, 10, local_image_dir=local_image_dir)
+        # current_app = device_factory.get_current_app(self.agent_config.device_id)
+
+        #加载 json文件的 context到self._context变量.
+        # 严格判断：如果目录已存在，强制停止程序，防止数据覆盖或混淆
+        print(f"data_path: {data_path}")
+        if not os.path.exists(data_path):
+            print(f"🛑 停止运行: 文件 {data_path} 不存在。")
+            sys.exit(1)
+
+        try:
+            with open(data_path, "r", encoding="UTF-8") as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            print(f"错误：文件 {data_path} 不存在")
+            data = None  # 或根据业务逻辑处理
+            sys.exit(1)
+        except json.JSONDecodeError:
+            print(f"错误：文件 {data_path} 不是合法的 JSON 格式")
+            data = None
+            sys.exit(1)
+
+        # message_data = {
+        #     "name": "manager",
+        #     "messages": self._context,
+        #     "response": self.safe_serialize(response),
+        #     "step_id": self._step_count,
+        #     "total_time": response.total_time,
+        # }
+        action_name = "messages"
+        if "messages" in data:
+            # 执行已有脚本
+            # print(f"有数据, messages")
+            action_object = data[action_name]
+            self._context = action_object
+            # print(f"shortcuts: {data}")
+        else:
+            # TODO 1.打开打车应用 调用模型生成脚本
+            print(f"🛑 停止运行: 字段 messages 不存在。")
+            sys.exit(1)
+
+
+        # Get model response
+        try:
+            msgs = get_messages(self.agent_config.lang)
+            print("\n" + "=" * 50)  # --------------------------------------------------
+            print(f"💭 {msgs['thinking']}:")  # 💭 思考过程: request中会答应思考过程,出错会是空
+            print("-" * 50)
+            response = self.model_client.request(self._context,is_print=False) #重放错误请求,不做并发多次尝试
+            # responses = self.request_n(self._context, n=3, text_content=text_content)
+            # response = self.get_best_response(responses)
+            # print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
+
+            # 2.解析
+            parse_action_ok = True
+            # Parse action from response
+            try:
+                # print(f"Response:\n{response}\nResponse end")  "action": "do(action=\"Tap\", element=[272,509])",
+                action = parse_action(response.action)  # 从 action字符串解析 action对象
+                response.action_obj = action
+            except ValueError as e:
+                if self.agent_config.verbose:
+                    traceback.print_exc()
+                # action解析错误
+                parse_action_ok = False
+
+            response.parse_action_ok = parse_action_ok
+            print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
+            return response
+        except Exception as e:
+            if self.agent_config.verbose:
+                traceback.print_exc()
+            raise e
