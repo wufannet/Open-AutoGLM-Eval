@@ -49,12 +49,47 @@ class TestAgentReplay(unittest.TestCase):
 
     def test_case_1(self):
         print("\n=== 开始 错误请求回放-点击去哪坐标错误 ===")
-        total_runs = 20
+        total_runs = 200
         success_count = 0
+        ################################ 20260206_213340_滴滴_Task029_民发天地东门
+        # 地址取反:20260129_173334_滴滴_Task037_吾悦广场1号门 #最终统计: 成功 0/20 | 通过率: 0.00%  #最终统计: 成功 2/10 | 通过率: 20.00%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0.json"
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0_v1.json"
 
-        # 地址取反:20260129_173334_滴滴_Task037_吾悦广场1号门 #最终统计: 成功 0/20 | 通过率: 0.00%
-        data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0.json"
-        data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0_v1.json"
+        #在主页点击“您想去哪儿”搜索框中的“您”字
+        #最终统计: 成功 7/10 | 通过率: 70.00% 最终统计: 成功 7/10 | 通过率: 70.00% 最终统计: 成功 83/100 | 通过率: 83.00%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0_v2.json"
+
+        #在主页点击“您想去哪儿”搜索框中的“您您您您您您您您您您”字
+        #最终统计: 成功 10/10 | 通过率: 100.00%  最终统计: 成功 50/50 | 通过率: 100.00% 最终统计: 成功 99/100 | 通过率: 99.00%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0_v3.json"
+
+        #20个您字
+        #最终统计: 成功 94/100 | 通过率: 94.00%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0_v4.json"
+
+        #最终统计: 成功 17/100 | 通过率: 17.00%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0_v6_直接点击20个您字.json"
+
+        #10个您 最终统计: 成功 99/100 | 通过率: 99.00% 最终统计: 成功 100/100 | 通过率: 100.00%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0_v5_1_10个您.json"
+
+        #最终统计: 成功 179/200 | 通过率: 89.50%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0_v5_5_10个您去掉字.json"
+
+        # 最终统计: 成功 100/100 | 通过率: 100.00%  #1  100 100% #最终统计: 成功 100/100 | 通过率: 100.00% #最终统计: 成功 500/500 | 通过率: 100.00% 最终统计: 成功 500/500 | 通过率: 100.00%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260206_211451_滴滴_压缩截图_v20_p17_c4_小米10_2/20260206_213340_滴滴_Task029_民发天地东门/step_2_req_0_v5_3_1个您_去掉字.json"
+
+        ################################ 20260129_174132_滴滴_Task045_襄阳市第一人民医院东院区门诊
+        #错误重现 最终统计: 成功 9/10 | 通过率: 90.00%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1/20260129_174132_滴滴_Task045_襄阳市第一人民医院东院区门诊/step_2.json"
+
+        #最终统计: 成功 21/100 | 通过率: 21.00% 最终统计: 成功 19/100 | 通过率: 19.00%
+        # data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1/20260129_174132_滴滴_Task045_襄阳市第一人民医院东院区门诊/step_2_1个您去掉字.json"
+
+
+        #最终统计: 成功 100/100 | 通过率: 100.00% 最终统计: 成功 100/100 | 通过率: 100.00% 最终统计: 成功 200/200 | 通过率: 100.00% 最终统计: 成功 200/200 | 通过率: 100.00% 最终统计: 成功 200/200 | 通过率: 100.00%
+        data_path = "/Users/wufan/PycharmProjects/GitHub/Open-AutoGLM/logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1/20260129_174132_滴滴_Task045_襄阳市第一人民医院东院区门诊/step_2_1个您_改模型的任务规划.json"
 
         for i in range(total_runs):
             with self.subTest(iteration=i):
