@@ -6,6 +6,7 @@ from datetime import datetime
 # 需安装 python-dotenv: pip install python-dotenv
 from dotenv import load_dotenv
 from StandaloneEvaluator import StandaloneEvaluator
+from ride.ride_didi_prompt import RideDidiPrompt
 # 加载 .env 文件中的变量
 load_dotenv()
 # 从环境变量中读取，如果读取不到则报错
@@ -79,19 +80,7 @@ class BatchAgentRunner:
         # 三段步骤,在什么页面 + 做什么操作/要操作的元素描述和位置描述,位置坐标 +进入什么页面成功和进入什么页面失败
         # 需要结构化语言和强关键字标签语言,比如要求生成地址的元素和生成工具函数的标签.从语言到规则语法.
         # prompt = f"1.打开滴滴\n2. 点击您想去哪儿\n3. 输入{destination}\n4. 点击最匹配的选项\n5. 在最终页面看到终点地址正确,看到报价以及看到底部的呼叫按钮代表任务完成请执行完成"
-        prompt = f"""任务指令：
-1. 启动与进入： 打开滴滴出行进入主页,请执行具体操作do(action="Launch", app="滴滴出行").
-2. 触发搜索： 在主页点击“您想去哪儿”搜索框,请执行具体操作do(action="Tap", element=[272,509]).
-  - 异常处理： 若进入“预约打车”或“立即选车”页面，请点击返回键回到主页重试，确保进入的是带键盘的“目的地搜索页面”。
-3. 输入目的地： 在键盘已经显示意味着输入框已经处于激活状态的目的地搜索页面输入“{destination}”,请执行具体操作do(action="Type", text="{destination}").
-4. 选择目标： 在搜索结果列表中，点击最匹配的选项（通常是第一项）。
-5. 判断页面状态（关键步骤）：
-  - 情况 A - 地址确认页： 如果页面底部出现“确认下车点”按钮，请点击它以进入下一步,如果没有就代表不需要确认下车点,不需要再找到和点击“确认下车点”,如果没有看到就进行任务完成检查。
-  - 情况 B - 报价预览页： 如果页面已经显示了多种车型的实时价格（如：惊喜特价 ¥XX、滴滴快车 ¥XX）和底部的“呼叫x种车型”按钮且终点地址正确，则任务已全部成功完成,不需要再找到和点击“确认下车点”，即视为任务成功。
-任务完成检查：
-  - 成功标准： 只要屏幕上出现了实时报价列表且终点地址正确，即视为任务成功。
-  - 终态动作： 停留在报价页面等待加载完成即可。
-  - 严禁操作： 禁止点击底部的“呼叫x种车型”按钮，严禁代替用户下单呼叫。"""
+        prompt = RideDidiPrompt.ride_didi_p18
 
         cmd = [
             "python", "-u", "main.py",
@@ -135,7 +124,7 @@ if __name__ == "__main__":
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     # 构造符合你要求的 log 目录名
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_并行等待超时fix_v19_p17_c3_p30_6"
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_压缩截图_v20_p17_c4_小米10_2"
     RUN_COUNT = 30
     runner = BatchAgentRunner()
     runner.start()
