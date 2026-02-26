@@ -80,7 +80,7 @@ class BatchAgentRunner:
         # 三段步骤,在什么页面 + 做什么操作/要操作的元素描述和位置描述,位置坐标 +进入什么页面成功和进入什么页面失败
         # 需要结构化语言和强关键字标签语言,比如要求生成地址的元素和生成工具函数的标签.从语言到规则语法.
         # prompt = f"1.打开滴滴\n2. 点击您想去哪儿\n3. 输入{destination}\n4. 点击最匹配的选项\n5. 在最终页面看到终点地址正确,看到报价以及看到底部的呼叫按钮代表任务完成请执行完成"
-        prompt = RideDidiPrompt.ride_didi_p18
+        prompt = RideDidiPrompt.ride_didi_p18.format(destination=destination)
 
         cmd = [
             "python", "-u", "main.py",
@@ -124,8 +124,8 @@ if __name__ == "__main__":
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     # 构造符合你要求的 log 目录名
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_压缩截图_v20_p17_c4_小米10_2"
-    RUN_COUNT = 30
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_压缩截图_v21_p18_c4_p30_360p_5"
+    RUN_COUNT = 50
     runner = BatchAgentRunner()
     runner.start()
     # 2. 任务结束后直接调用评估 (传入刚才定义的 BASE_LOG_DIR)

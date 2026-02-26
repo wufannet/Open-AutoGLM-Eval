@@ -21,13 +21,14 @@ if not API_KEY:
     sys.exit(1)
 
 # ==================== 默认配置 ====================
-# DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
+DEFAULT_LOGS_ROOT = "./logs_eval/20260129_1627_滴滴_解决寻找确认下车点_v15_1"
 # DEFAULT_LOGS_ROOT = "./logs_eval/20260131_1704_滴滴_并行生成多次_v17_p17_c1_p30_1"
-DEFAULT_LOGS_ROOT = "./logs_eval/20260206_182101_滴滴_压缩截图_v20_p17_c4_小米10_1"
+# DEFAULT_LOGS_ROOT = "./logs_eval/20260206_182101_滴滴_压缩截图_v20_p17_c4_小米10_1"
+# DEFAULT_LOGS_ROOT = "./logs_eval/20260209_082937_滴滴_压缩截图_v21_p18_c4_p30_360p_2"
 EVAL_STORE = "./logs_eval_reports"
 MAX_WORKERS = 1
-eval_version = "didi_eval_v9_2"
-eval_prompt = Prompt.didi_eval_v9_2
+eval_version = "didi_eval_v9_2_10yello"
+eval_prompt = Prompt.didi_eval_v9_2_10yello
 
 
 class StandaloneEvaluator:
