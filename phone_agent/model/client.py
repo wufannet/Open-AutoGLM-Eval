@@ -238,21 +238,21 @@ class ModelClient:
         """
         # Rule 1: Check for finish(message=
         if "finish(message=" in content:
-            parts = content.split("finish(message=", 1)
+            parts = content.rsplit("finish(message=", 1)
             thinking = parts[0].strip()
             action = "finish(message=" + parts[1]
             return thinking, action
 
         # Rule 2: Check for do(action=
         if "do(action=" in content:
-            parts = content.split("do(action=", 1)
+            parts = content.rsplit("do(action=", 1)
             thinking = parts[0].strip()
             action = "do(action=" + parts[1]
             return thinking, action
 
         # Rule 3: Fallback to legacy XML tag parsing
         if "<answer>" in content:
-            parts = content.split("<answer>", 1)
+            parts = content.rsplit("<answer>", 1)
             thinking = parts[0].replace("<think>", "").replace("</think>", "").strip()
             action = parts[1].replace("</answer>", "").strip()
             return thinking, action
