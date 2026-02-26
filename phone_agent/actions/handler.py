@@ -381,6 +381,10 @@ def parse_action(response: str) -> dict[str, Any]:
     print(f"Parsing action: {response}")
     response_old = response
     response = response.replace("Tap element", '"Tap", element').strip()
+
+    #-do(action="Tap", element=[x,y])
+    # do(action=Tap(element=[314,160])
+    response = response.replace("Tap(element", '"Tap", element').strip()
     if response_old != response:
         print(f"response_old != response replace action: {response}")
 
@@ -422,10 +426,12 @@ def parse_action(response: str) -> dict[str, Any]:
                 "message": response.replace("finish(message=", "")[1:-2],
             }
         else:
-            raise ValueError(f"Failed to parse action: {response} Failed to parse action end")
+            raise ValueError(f"Failed to parse action 没有找到action关键字: Failed to parse action end")
         return action
     except Exception as e:
-        raise ValueError(f"Failed to parse action: {e}")
+        print(f"Failed to parse action response: {response}")
+        print(f"Failed to parse action response end")
+        raise ValueError(f"Failed to parse action e: {e}")
 
 
 def do(**kwargs) -> dict[str, Any]:
