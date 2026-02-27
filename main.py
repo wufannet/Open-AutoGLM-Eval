@@ -38,7 +38,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def check_system_requirements(
-    device_type: DeviceType = DeviceType.ADB, wda_url: str = "http://localhost:8100"
+    args,device_type: DeviceType = DeviceType.ADB, wda_url: str = "http://localhost:8100"
 ) -> bool:
     """
     Check system requirements before running the agent.
@@ -195,9 +195,11 @@ def check_system_requirements(
         return False
 
     # Check 3: ADB Keyboard installed (only for ADB) or WebDriverAgent (for iOS)
+    device_id = args.device_id
     if device_type == DeviceType.ADB:
         print("3. Checking ADB Keyboard...", end=" ")
         try:
+            adb_prefix = _get_adb_prefix(device_id)
             result = subprocess.run(
                 ["adb", "shell", "ime", "list", "-s"],
                 capture_output=True,
@@ -763,10 +765,11 @@ def main():
 
     # Run system requirements check before proceeding
     if not check_system_requirements(
+        args,
         device_type,
         wda_url=args.wda_url
         if device_type == DeviceType.IOS
-        else "http://localhost:8100",
+        else "http://localhost:8100"
     ):
         sys.exit(1)
     # print(f"读取到的API_KEY: {args.apikey}")

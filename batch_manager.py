@@ -80,17 +80,18 @@ class BatchAgentRunner:
         # 三段步骤,在什么页面 + 做什么操作/要操作的元素描述和位置描述,位置坐标 +进入什么页面成功和进入什么页面失败
         # 需要结构化语言和强关键字标签语言,比如要求生成地址的元素和生成工具函数的标签.从语言到规则语法.
         # prompt = f"1.打开滴滴\n2. 点击您想去哪儿\n3. 输入{destination}\n4. 点击最匹配的选项\n5. 在最终页面看到终点地址正确,看到报价以及看到底部的呼叫按钮代表任务完成请执行完成"
-        prompt = RideDidiPrompt.ride_didi_p18.format(destination=destination)
-
+        prompt = RideDidiPrompt.ride_hxz_p20.format(destination=destination)
+        #--device-id "MQS0219610003655" \
         cmd = [
             "python", "-u", "main.py",
             "--base-url", "https://open.bigmodel.cn/api/paas/v4",
             "--model", "autoglm-phone",
             "--apikey", API_KEY,
             "--log_name", log_name,
-            "--app", "滴滴",
+            "--app", "花小猪打车",
             "--eval", "1",
             "--max-steps", "15",
+            "--device-id", "MQS0219610003655",
             prompt
         ]
 
@@ -124,8 +125,12 @@ if __name__ == "__main__":
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     # 构造符合你要求的 log 目录名
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_压缩截图_v21_p18_c4_p30_360p_5"
-    RUN_COUNT = 50
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_压缩截图_v21_p18_c4_p30_360p_5"
+    # _花小猪_解决解析错误_v23_p20_c4
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决解析错误_v23_p20_c4_p30_720p_10_20"
+    #解决解析错误rsplit_v24_p20_c5 实际从 21:00开始,8就是.
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决解析错误rsplit_v24_p20_c5_p30_720p_2_20"
+    RUN_COUNT = 20
     runner = BatchAgentRunner()
     runner.start()
     # 2. 任务结束后直接调用评估 (传入刚才定义的 BASE_LOG_DIR)
