@@ -342,6 +342,9 @@ class PhoneAgent:
                 print(f"\n[Parallel] 发起 {n} 路并行请求，正在展示第 1 路的实时思考...\n")
 
             response = self.model_client.request(self._context, is_print=is_print)
+            #print model_client_response,区分不同位置的response print,在解析报错前先打印方便排错
+            print(f"model_client_response index: {index}")
+            print(f"model_client_response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nmodel_client_response_end")
             # 能并行的都并行
             #1.保存log,json到文件
             self.log_model_message(response, index, text_content)
@@ -461,7 +464,7 @@ class PhoneAgent:
             # response = self.model_client.request(self._context,is_print=False)
             responses = self.request_n(self._context,n = 3, text_content=text_content)
             response = self.get_best_response(responses)
-            print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
+            print(f"get_best_response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nget_best_response end")
 
         except Exception as e:
             if self.agent_config.verbose:
@@ -655,7 +658,7 @@ class PhoneAgent:
                 parse_action_ok = False
 
             response.parse_action_ok = parse_action_ok
-            print(f"response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
+            print(f"replay_response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nresponse end")
             return response
         except Exception as e:
             if self.agent_config.verbose:
