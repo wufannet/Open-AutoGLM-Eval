@@ -345,7 +345,7 @@ class PhoneAgent:
             # 能并行的都并行
             #1.保存log,json到文件
             self.log_model_message(response, index, text_content)
-            #2.解析
+            #2.解析action字符串到action dict方便后续使用
             parse_action_ok = True
             # Parse action from response
             try:
