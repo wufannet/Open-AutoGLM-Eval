@@ -342,7 +342,7 @@ class PhoneAgent:
                 print(f"\n[Parallel] 发起 {n} 路并行请求，正在展示第 1 路的实时思考...\n")
 
             response = self.model_client.request(self._context, is_print=is_print)
-            #print model_client_response,区分不同位置的response print,在解析报错前先打印方便排错
+            #debug log  print model_client_response,区分不同位置的response print,在解析报错前先打印方便排错,定位具体的错误响应 index,遇到保存到.log文件失败.
             print(f"model_client_response index: {index}")
             print(f"model_client_response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nmodel_client_response_end")
             # 能并行的都并行
