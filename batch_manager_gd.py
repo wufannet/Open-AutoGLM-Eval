@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 # 需安装 python-dotenv: pip install python-dotenv
 from dotenv import load_dotenv
-from StandaloneEvaluator import StandaloneEvaluator
+from StandaloneEvaluatorGd import StandaloneEvaluator
 from ride.ride_didi_prompt import RideDidiPrompt
 # 加载 .env 文件中的变量
 load_dotenv()
@@ -88,9 +88,9 @@ class BatchAgentRunner:
             "--model", "autoglm-phone",
             "--apikey", API_KEY,
             "--log_name", log_name,
-            "--app", "花小猪打车",
+            "--app", reset_app,
             "--eval", "1",
-            "--max-steps", "15",
+            "--max-steps", "12",
             "--device-id", "MQS0219610003655",
             prompt
         ]
@@ -142,8 +142,13 @@ if __name__ == "__main__":
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决叫车_v26_p24_c5_p30_360p_50_3"
 
     #花小猪 ride_hxz_p25_c5 解决你字重复问题,改为中文双引号闭合
-    eval_prompt = RideDidiPrompt.ride_hxz_p25
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决叫车_v27_p25_c5_p30_360p_50_3"
+    # eval_prompt = RideDidiPrompt.ride_hxz_p25
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决叫车_v27_p25_c5_p30_360p_50_3"
+
+    # 高德 ride_gd_p26 基于ride_hxz_p25修改得到 花小猪改为高德,目的地改为终点,立即叫车更改为立即打车和修改系统提示词
+    reset_app ="高德地图"
+    eval_prompt = RideDidiPrompt.ride_gd_p26
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_高德_首次_v28_p26_c5_p30_360p_10_4"
 
     RUN_COUNT = 50
     runner = BatchAgentRunner()
