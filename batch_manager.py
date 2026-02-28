@@ -49,7 +49,7 @@ DESTINATIONS= [
 RUN_COUNT = 1
 # 20260123_104918_滴滴_详细步骤_v4_单应用mvp_autoglm-phone_勇士篮球总部
 BASE_LOG_DIR = "./logs_eval/20260124_1131_滴滴_详细步骤_v4"
-
+eval_prompt = RideDidiPrompt.ride_hxz_p24
 
 
 # ===============================================
@@ -80,7 +80,7 @@ class BatchAgentRunner:
         # 三段步骤,在什么页面 + 做什么操作/要操作的元素描述和位置描述,位置坐标 +进入什么页面成功和进入什么页面失败
         # 需要结构化语言和强关键字标签语言,比如要求生成地址的元素和生成工具函数的标签.从语言到规则语法.
         # prompt = f"1.打开滴滴\n2. 点击您想去哪儿\n3. 输入{destination}\n4. 点击最匹配的选项\n5. 在最终页面看到终点地址正确,看到报价以及看到底部的呼叫按钮代表任务完成请执行完成"
-        prompt = RideDidiPrompt.ride_hxz_p20.format(destination=destination)
+        prompt = eval_prompt.format(destination=destination)
         #--device-id "MQS0219610003655" \
         cmd = [
             "python", "-u", "main.py",
@@ -126,11 +126,26 @@ if __name__ == "__main__":
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     # 构造符合你要求的 log 目录名
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_压缩截图_v21_p18_c4_p30_360p_5"
-    # _花小猪_解决解析错误_v23_p20_c4
+
+    # 花小猪_解决解析错误_v23_p20_c4
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决解析错误_v23_p20_c4_p30_720p_10_20"
-    #解决解析错误rsplit_v24_p20_c5 实际从 21:00开始,8就是.
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决解析错误rsplit_v24_p20_c5_p30_720p_2_20"
-    RUN_COUNT = 20
+
+    #花小猪_解决解析错误rsplit_v24_p20_c5 实际从 21:00开始,8就是.
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决解析错误rsplit_v24_p20_c5_p30_720p_2_20"
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决解析错误rsplit_v24_p20_c5_p30_360p_1_50"
+
+    #花小猪_20个你_v25_p23_c5 1.坐标问题-20个你解决,出现 1 次y坐标偏小点到起点, 2.解决打车问题-系统提示词添加 1 行花小猪禁止打车 如果没有右边的可以还原定位到搜索框
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_20个你_v25_p23_c5_p30_360p_1_25"
+
+    #花小猪_解决叫车_v26_p24_c5 解决打车问题,增加多个地方的禁止语句
+    # eval_prompt = RideDidiPrompt.ride_hxz_p24
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决叫车_v26_p24_c5_p30_360p_50_3"
+
+    #花小猪 ride_hxz_p25 解决你字重复问题,改为中文双引号闭合
+    eval_prompt = RideDidiPrompt.ride_hxz_p25
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决叫车_v27_p25_c5_p30_360p_50_2"
+
+    RUN_COUNT = 50
     runner = BatchAgentRunner()
     runner.start()
     # 2. 任务结束后直接调用评估 (传入刚才定义的 BASE_LOG_DIR)
