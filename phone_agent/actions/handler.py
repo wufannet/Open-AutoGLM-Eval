@@ -382,9 +382,11 @@ def parse_action(response: str) -> dict[str, Any]:
     response_old = response
     response = response.replace("Tap element", '"Tap", element').strip()
 
-    #-do(action="Tap", element=[x,y])
+    #-do(action="Tap", element=[x,y]) 正确的
     # do(action=Tap(element=[314,160])
     response = response.replace("Tap(element", '"Tap", element').strip()
+    # fix解析错误 Failed to parse action response: do(action=""Tap", element=[498, 623])
+    response = response.replace('do(action=""Tap", element', 'do(action="Tap", element').strip()
     if response_old != response:
         print(f"response_old != response replace action: {response}")
 
