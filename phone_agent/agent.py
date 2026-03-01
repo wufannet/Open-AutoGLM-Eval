@@ -343,8 +343,8 @@ class PhoneAgent:
 
             response = self.model_client.request(self._context, is_print=is_print)
             #debug log  print model_client_response,区分不同位置的response print,在解析报错前先打印方便排错,定位具体的错误响应 index,遇到保存到.log文件失败.
-            print(f"model_client_response index: {index}")
-            print(f"model_client_response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nmodel_client_response_end")
+            print(f"model_client_response step {self._step_count} index : {index}")
+            print(f"model_client_response step {self._step_count} json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nmodel_client_response_end")
             # 能并行的都并行
             #1.保存log,json到文件
             self.log_model_message(response, index, text_content)
@@ -459,12 +459,12 @@ class PhoneAgent:
         try:
             msgs = get_messages(self.agent_config.lang)
             print("\n" + "=" * 50) #--------------------------------------------------
-            print(f"💭 {msgs['thinking']}:") #💭 思考过程: request中会答应思考过程,出错会是空
+            print(f"💭 {msgs['thinking']} step {self._step_count}:") #💭 思考过程: request中会答应思考过程,出错会是空
             print("-" * 50)
             # response = self.model_client.request(self._context,is_print=False)
             responses = self.request_n(self._context,n = 3, text_content=text_content)
             response = self.get_best_response(responses)
-            print(f"get_best_response json:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nget_best_response end")
+            print(f"get_best_response json step {self._step_count}:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nget_best_response end")
 
         except Exception as e:
             if self.agent_config.verbose:
