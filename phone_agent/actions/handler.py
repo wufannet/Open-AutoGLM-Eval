@@ -387,10 +387,16 @@ def parse_action(response: str) -> dict[str, Any]:
     response = response.replace("Tap(element", '"Tap", element').strip()
     # fix解析错误 Failed to parse action response: do(action=""Tap", element=[498, 623])
     response = response.replace('do(action=""Tap", element', 'do(action="Tap", element').strip()
+    # fix解析错误 Failed to parse action response: do(action=Tap", element=[499,289])
+    response = response.replace('do(action=Tap", element', 'do(action="Tap", element').strip()
+    response = response.replace('do(action=Tap, element', 'do(action="Tap", element').strip()
+    response = response.replace('do(action="Tap, element', 'do(action="Tap", element').strip()
 
     #- - do(action="Type", text="xxx")
     # fix解析错误 Failed to parse action response: do(action=Type", text="")
     response = response.replace('do(action=Type", text', 'do(action="Type", text').strip()
+
+    # 可以用判断包含type,tap  直接取值,小问题先不管了.反正现在并行请求了 3 次不会全出错
 
     if response_old != response:
         print(f"response_old != response replace action: {response}")
