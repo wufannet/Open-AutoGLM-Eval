@@ -18,6 +18,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from urllib.parse import urlparse
 
 from openai import OpenAI
@@ -703,11 +704,21 @@ def main():
     # 自动化评估清理环境,先简单支持安卓 关闭应用
     if args.app:
         is_stop_app = stop_app(args.app, args.device_id)
+
+
         if not is_stop_app:
-            print("reset env error return is_stop_app false")
+            print("E reset env error return is_stop_app false")
             return
         else:
             print("reset env succeed is_stop_app true")
+
+        is_launch_app = launch_app(args.app, args.device_id)
+        print(f"prewarm is_stop_app: {is_stop_app}, is_launch_app: {is_launch_app}")
+        if not is_launch_app:
+            print("E reset env error return is_launch_app false")
+            return
+        else:
+            print("reset env succeed is_launch_app true")
     else:
         print("args.app null,不用先 stop app")
 
@@ -925,8 +936,59 @@ def stop_app(
         capture_output=True,
     )
 
-    print(f"stop_app ADB command: {' '.join(adb_command)}")
+    print(f"prewarm stop_app ADB command: {' '.join(adb_command)}")
     # time.sleep(delay)
+    return True
+
+def launch_app(
+    app_name: str, device_id: str | None = None, delay: float | None = None
+) -> bool:
+    """
+    Launch an app by name.
+
+    Args:
+        app_name: The app name (must be in APP_PACKAGES).
+        device_id: Optional ADB device ID.
+        delay: Delay in seconds after launching. If None, uses configured default.
+
+    Returns:
+        True if app was launched, False if app not found.
+    """
+    # if delay is None:
+    #     delay = TIMING_CONFIG.device.default_launch_delay
+
+    if app_name not in APP_PACKAGES:
+        print(f"没有找到匹配的 app name '{app_name}' not found.")
+        return False
+
+    adb_prefix = _get_adb_prefix(device_id)
+    package = APP_PACKAGES[app_name]
+    print(f"找到 app name '{app_name}' found. Launching '{package}'.")
+    subprocess.run(
+        adb_prefix
+        + [
+            "shell",
+            "monkey",
+            "-p",
+            package,
+            "-c",
+            "android.intent.category.LAUNCHER",
+            "1",
+        ],
+        capture_output=True,
+    )
+    adb_command = adb_prefix+ [
+            "shell",
+            "monkey",
+            "-p",
+            package,
+            "-c",
+            "android.intent.category.LAUNCHER",
+            "1",
+        ]
+    print(f"prewarm launch_app ADB command: {' '.join(adb_command)}")
+    print("time.sleep(3)")
+    time.sleep(3) #代码直接预热启动后等待3秒在截图给 AI
     return True
 
 if __name__ == "__main__":
