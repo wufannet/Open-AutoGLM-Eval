@@ -233,7 +233,7 @@ class PhoneAgent:
                 f.write("=== PROMPT ===\n")
                 f.write(text_content + "\n\n")  # 无图片提示词方便查看,只有用户提示词
                 f.write("=== OUTPUT ===\n")
-                f.write(response.raw_content)  # 怎么没有标签,模型并没有按照要求
+                f.write(response.raw_content)  # 怎么没有answer标签,模型并没有按照要求
         except Exception as e:
             print(f"Failed to save log: {e}")
 
@@ -423,8 +423,7 @@ class PhoneAgent:
         # Capture current screen state
         device_factory = get_device_factory()
         current_time = datetime.now()
-        formatted_time = current_time.strftime(
-            f'%Y-%m-%d_%H-%M-%S_{str(uuid.uuid4().hex[:8])}')
+        formatted_time = current_time.strftime(f'%Y-%m-%d_%H-%M-%S_{str(uuid.uuid4().hex[:8])}')
         # # 格式1：2026-02-04_15-30-20（基础版，可读性最佳）
         #  strftime("%Y-%m-%d_%H-%M-%S") 截图文件名加入时分秒,同时看时分秒,同时后面当天秒的整数方便计算下一步耗时多少
         local_image_dir = os.path.join(image_save_path, f"screenshot_{formatted_time}_{self._step_count}.png")

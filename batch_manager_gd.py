@@ -148,9 +148,9 @@ if __name__ == "__main__":
     # 高德 ride_gd_p26 基于ride_hxz_p25修改得到 花小猪改为高德,目的地改为终点,立即叫车更改为立即打车和修改系统提示词
     reset_app ="高德地图"
     eval_prompt = RideDidiPrompt.ride_gd_p26
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_高德_首次_v28_p26_c5_p30_360p_10_4"
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_高德_首次_v28_p26_c5_p30_360p_30_8"
 
-    RUN_COUNT = 50
+    RUN_COUNT = 30
     runner = BatchAgentRunner()
     runner.start()
     # 2. 任务结束后直接调用评估 (传入刚才定义的 BASE_LOG_DIR)

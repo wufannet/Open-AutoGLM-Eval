@@ -154,7 +154,7 @@ class ActionHandler:
         #     946
         #   ]
         # }
-        element = action.get("element")
+        element = action.get("element") #是个数组
         if not element:
             return ActionResult(False, False, "No element coordinates")
 

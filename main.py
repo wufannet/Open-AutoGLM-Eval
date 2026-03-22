@@ -700,7 +700,7 @@ def main():
     if not os.path.exists(image_save_path):
         os.mkdir(image_save_path)
 
-    # 自动化评估清理环境,先简单支持安卓
+    # 自动化评估清理环境,先简单支持安卓 关闭应用
     if args.app:
         is_stop_app = stop_app(args.app, args.device_id)
         if not is_stop_app:
@@ -937,6 +937,10 @@ if __name__ == "__main__":
     main()
     program_end_time = datetime.now()
     duration = program_end_time - program_start_time
+    # 总程序开始时间: 2026-03-01 13:19:34
+    # 总程序结束时间: 2026-03-01 13:20:08
+    # 总程序运行耗时: 0:00:34.2
+    # 总程序运行耗时秒: 34.3 秒
     print(f"总程序开始时间: {program_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"总程序结束时间: {program_end_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"总程序运行耗时: {str(duration)[:-5]}") #时分秒格式

@@ -33,34 +33,25 @@ if not API_KEY:
 DESTINATIONS= [
     # "民发天地东门",
     "万达广场1号门",
-    # "襄阳市第一人民医院东院区门诊",
+    "襄阳市第一人民医院东院区门诊",
     "襄阳市第一人民医院东院区急诊",
     "襄阳火车站出站口",
-    # "襄阳东站北进站口",
-    # "襄阳东站北出站口",
+    "襄阳东站北进站口",
+    "襄阳东站北出站口",
     "勇士篮球总部",
-    # "吾悦广场1号门",
-    # "吾悦广场3号门",
+    "吾悦广场1号门",
+    "吾悦广场3号门",
     "襄阳刘集机场国内出发",
     "国投襄阳著",
     "国投襄阳府",
     "白马广场",
 ]
-# start = "民发天地东门"
-# start = "吾悦广场3号门"
-# start = "民发天地南门"
-# start = "襄阳市第一人民医院东院区门诊"
-start = "襄阳东站北出站口"
-# start = "襄阳刘集机场到达"
-
 RUN_COUNT = 1
-app = "滴滴"
 # 20260123_104918_滴滴_详细步骤_v4_单应用mvp_autoglm-phone_勇士篮球总部
 BASE_LOG_DIR = "./logs_eval/20260124_1131_滴滴_详细步骤_v4"
 # eval_prompt = RideDidiPrompt.ride_hxz_p24
 eval_prompt = RideDidiPrompt.ride_didi_p21
 eval_prompt_start = RideDidiPrompt.ride_didi_p101
-
 
 
 # ===============================================
@@ -102,7 +93,7 @@ class BatchAgentRunner:
             "--model", "autoglm-phone",
             "--apikey", API_KEY,
             "--log_name", log_name,
-            "--app", app,
+            "--app", "花小猪打车",
             "--eval", "1",
             "--max-steps", "15",
             "--device-id", "MQS0219610003655",
@@ -124,7 +115,8 @@ class BatchAgentRunner:
     def start(self):
         for i in range(1, RUN_COUNT + 1):
             dest = DESTINATIONS[(i - 1) % len(DESTINATIONS)]
-
+            # start = "民发天地东门"
+            start = "吾悦广场3号门"
             self.run_single_agent(dest, i,start)
 
         print("\n🏁 所有 Agent 任务运行完毕！")
@@ -161,16 +153,11 @@ if __name__ == "__main__":
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_解决叫车_v27_p25_c5_p30_360p_50_4"
 
     # 滴滴 起点
-    # eval_prompt = RideDidiPrompt.ride_didi_p21
-    # eval_prompt_start = RideDidiPrompt.ride_didi_p101
-    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_起点_v28_p101_c5_p30_360p_10_2"
-
-    # 滴滴 # ride_didi_p102 尝试解决-坐标错误-点击起点坐标错误.点到终点推荐的地址了,解决方法-点击“从xx上车”中的“从"字
     eval_prompt = RideDidiPrompt.ride_didi_p21
-    eval_prompt_start = RideDidiPrompt.ride_didi_p102
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击起点坐标错误_v29_p102_c5_p30_360p_10_1"
+    eval_prompt_start = RideDidiPrompt.ride_didi_p101
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_起点_v28_p101_c5_p30_360p_1_10"
 
-    RUN_COUNT = 10
+    RUN_COUNT = 1
     runner = BatchAgentRunner()
     runner.start()
     # 2. 任务结束后直接调用评估 (传入刚才定义的 BASE_LOG_DIR)
