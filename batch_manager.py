@@ -31,16 +31,17 @@ if not API_KEY:
 # #国投襄阳著
 # #国投襄阳府
 DESTINATIONS= [
-    # "民发天地东门",
+    "民发天地-东门",
+    "民发天地东门",
     "万达广场1号门",
-    # "襄阳市第一人民医院东院区门诊",
+    "襄阳市第一人民医院东院区门诊",
     "襄阳市第一人民医院东院区急诊",
     "襄阳火车站出站口",
-    # "襄阳东站北进站口",
-    # "襄阳东站北出站口",
+    "襄阳东站北进站口",
+    "襄阳东站北出站口",
     "勇士篮球总部",
-    # "吾悦广场1号门",
-    # "吾悦广场3号门",
+    "吾悦广场1号门",
+    "吾悦广场3号门",
     "襄阳刘集机场国内出发",
     "国投襄阳著",
     "国投襄阳府",
@@ -50,8 +51,9 @@ DESTINATIONS= [
 # start = "吾悦广场3号门"
 # start = "民发天地南门"
 # start = "襄阳市第一人民医院东院区门诊"
-start = "襄阳东站北出站口"
-# start = "襄阳刘集机场到达"
+# start = "襄阳东站北出站口"
+start = "襄阳刘集机场到达"
+# start = "石油大厦长虹路"
 
 RUN_COUNT = 1
 app = "滴滴"
@@ -104,7 +106,8 @@ class BatchAgentRunner:
             "--log_name", log_name,
             "--app", app,
             "--eval", "1",
-            "--max-steps", "15",
+            "--max-steps", "15", #参数步骤设置
+            # "--max-steps", "1",
             "--device-id", "MQS0219610003655",
             prompt
         ]
@@ -125,7 +128,8 @@ class BatchAgentRunner:
         for i in range(1, RUN_COUNT + 1):
             dest = DESTINATIONS[(i - 1) % len(DESTINATIONS)]
 
-            self.run_single_agent(dest, i,start)
+            self.run_single_agent(dest, i,"")
+            # self.run_single_agent(dest, i,start)
 
         print("\n🏁 所有 Agent 任务运行完毕！")
         print("💡 现在你可以运行 `python standalone_evaluator.py` 来开始并行评估。")
@@ -166,9 +170,31 @@ if __name__ == "__main__":
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_起点_v28_p101_c5_p30_360p_10_2"
 
     # 滴滴 # ride_didi_p102 尝试解决-坐标错误-点击起点坐标错误.点到终点推荐的地址了,解决方法-点击“从xx上车”中的“从"字
-    eval_prompt = RideDidiPrompt.ride_didi_p21
-    eval_prompt_start = RideDidiPrompt.ride_didi_p102
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击起点坐标错误_v29_p102_c5_p30_360p_10_1"
+    # eval_prompt = RideDidiPrompt.ride_didi_p21
+    # eval_prompt_start = RideDidiPrompt.ride_didi_p102
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击起点坐标错误_v29_p102_c5_p30_360p_10_1"
+
+    # ride_didi_p103 尝试解决-坐标错误-点击终点定位错误.点到终点推荐的地址了,解决方法-点击“输入目的地”左边的放大镜图标,区分终点情况
+    # eval_prompt = RideDidiPrompt.ride_didi_p21
+    # eval_prompt_start = RideDidiPrompt.ride_didi_p103
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误_v30_p103_c5_p30_360p_10_1"
+
+    # ride_didi_p103 尝试解决-坐标错误-点击终点定位错误.点到终点推荐的地址了,解决方法-点击“输入目的地”左边的放大镜图标,区分终点情况  //成功 10次
+    # eval_prompt = RideDidiPrompt.ride_didi_p22
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误_v31_p22_c5_p30_360p_10_1"
+
+    # #ride_didi_p23 点击推荐终点地址,只测试第一步, 失败
+    # eval_prompt = RideDidiPrompt.ride_didi_p23
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误条件_v32_p22_c5_p30_360p_10_1"
+
+    # ride_didi_p25 # 为了终点推荐匹配时,直接点击终点时间,节约时间   //优化非必需,优化也很小,因为只有很少情况刚好推荐地址匹配.
+    # eval_prompt = RideDidiPrompt.ride_didi_p25
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误条件_v34_p25_c5_p30_360p_10_1"
+
+    # 回退到 # ride_didi_p22 2026.3.22 尝试解决-坐标错误-点击终点定位错误.点到终点推荐的地址了,解决方法-点击“输入目的地”中的“输"字,区分终点情况
+    eval_prompt = RideDidiPrompt.ride_didi_p22
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误条件_v35_p22_c5_p30_360p_10_1"
+
 
     RUN_COUNT = 10
     runner = BatchAgentRunner()
