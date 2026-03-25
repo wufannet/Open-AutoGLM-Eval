@@ -32,14 +32,16 @@ if not API_KEY:
 # #国投襄阳府
 DESTINATIONS= [
     "民发天地-东门",
-    "民发天地东门",
+    "勇士篮球总部",
+    # "民发天地东门",
     "万达广场1号门",
+    "勇士篮球总部", #前面20个能2次,且有没有推荐 2 种情况都有
     "襄阳市第一人民医院东院区门诊",
     "襄阳市第一人民医院东院区急诊",
+    "勇士篮球总部",
     "襄阳火车站出站口",
     "襄阳东站北进站口",
     "襄阳东站北出站口",
-    "勇士篮球总部",
     "吾悦广场1号门",
     "吾悦广场3号门",
     "襄阳刘集机场国内出发",
@@ -47,6 +49,7 @@ DESTINATIONS= [
     "国投襄阳府",
     "白马广场",
 ]
+# start = ""
 # start = "民发天地东门"
 # start = "吾悦广场3号门"
 # start = "民发天地南门"
@@ -61,7 +64,7 @@ app = "滴滴"
 BASE_LOG_DIR = "./logs_eval/20260124_1131_滴滴_详细步骤_v4"
 # eval_prompt = RideDidiPrompt.ride_hxz_p24
 eval_prompt = RideDidiPrompt.ride_didi_p21
-eval_prompt_start = RideDidiPrompt.ride_didi_p101
+# eval_prompt_start = RideDidiPrompt.ride_didi_p105
 
 
 
@@ -96,7 +99,7 @@ class BatchAgentRunner:
         if(start == ""):
             prompt = eval_prompt.format(destination=destination)
         else:
-            prompt = eval_prompt_start.format(destination=destination,start=start)
+            prompt = eval_prompt.format(destination=destination,start=start)
         #--device-id "MQS0219610003655" \
         cmd = [
             "python", "-u", "main.py",
@@ -108,7 +111,8 @@ class BatchAgentRunner:
             "--eval", "1",
             "--max-steps", "15", #参数步骤设置
             # "--max-steps", "1",
-            "--device-id", "MQS0219610003655",
+            # "--device-id", "MQS0219610003655",
+            # "--device-id", "d93c122", #可以不传设备默认当前链接
             prompt
         ]
 
@@ -128,8 +132,8 @@ class BatchAgentRunner:
         for i in range(1, RUN_COUNT + 1):
             dest = DESTINATIONS[(i - 1) % len(DESTINATIONS)]
 
-            self.run_single_agent(dest, i,"")
-            # self.run_single_agent(dest, i,start)
+            # self.run_single_agent(dest, i,"")
+            self.run_single_agent(dest, i,start)
 
         print("\n🏁 所有 Agent 任务运行完毕！")
         print("💡 现在你可以运行 `python standalone_evaluator.py` 来开始并行评估。")
@@ -192,11 +196,40 @@ if __name__ == "__main__":
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误条件_v34_p25_c5_p30_360p_10_1"
 
     # 回退到 # ride_didi_p22 2026.3.22 尝试解决-坐标错误-点击终点定位错误.点到终点推荐的地址了,解决方法-点击“输入目的地”中的“输"字,区分终点情况
-    eval_prompt = RideDidiPrompt.ride_didi_p22
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误条件_v35_p22_c5_p30_360p_10_1"
+    # eval_prompt = RideDidiPrompt.ride_didi_p22
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误条件_v35_p22_c5_p30_360p_10_1"
+
+    # ride_didi_p105 基于ride_didi_p22删除终点条件,  //滴滴起点当前
+    # eval_prompt = RideDidiPrompt.ride_didi_p105
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_删除终点条件_v36_p105_c5_p30_360p_10_1"
+
+    # ride_didi_p107 解决设置完起点提前结束错误 ,只留一个提示词
+    # eval_prompt = RideDidiPrompt.ride_didi_p107
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_删除终点条件_v37_p107_c5_p30_360p_10_1"
+
+    # ride_didi_p108 解决设置完起点提前结束错误,设置改为修改,增加等在定位中情况
+    # eval_prompt = RideDidiPrompt.ride_didi_p108
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_删除终点条件_v38_p108_c5_p30_360p_20_2"
+
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_删除终点条件_v38_p108_c5_小米_360p_20_2"
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_删除终点条件_v38_p108_c5_p30_360p_20_4"
+
+    # ride_didi_p109 解决停在确认下车点
+    # eval_prompt = RideDidiPrompt.ride_didi_p109
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_解决停在确认下车点_v38_p108_c5_小米_360p_20_1"
+
+    # ride_didi_p111 解决终点坐标错误.击搜索框内的"输入目的地"文字部分，而不是整个搜索框区域。这样会直接进入搜索界面  10/10成功
+    # eval_prompt = RideDidiPrompt.ride_didi_p111
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_解决停在确认下车点_v38_p111_c5_小米_360p_20_1"
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_解决停在确认下车点_v38_p111_c5_p30_360p_50_2"
+
+    # ride_didi_p112
+    eval_prompt = RideDidiPrompt.ride_didi_p111
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_解决停在确认下车点_v39_p112_c5_p30_360p_30_1"
 
 
-    RUN_COUNT = 10
+
+    RUN_COUNT = 30
     runner = BatchAgentRunner()
     runner.start()
     # 2. 任务结束后直接调用评估 (传入刚才定义的 BASE_LOG_DIR)
