@@ -1012,8 +1012,8 @@ def launch_app(
             "1",
         ]
     print(f"prewarm launch_app ADB command: {' '.join(adb_command)}")
-    print("time.sleep(4)")
-    time.sleep(4) #代码直接预热启动后等待3秒在截图给AI //没调过显示还有 1 秒,多 1 秒.
+    print("time.sleep(4.5)")
+    time.sleep(4.5) #代码直接预热启动后等待4.5秒在截图给AI //没调过显示还有 1 秒,多 1 秒.
     return True
 
 if __name__ == "__main__":
