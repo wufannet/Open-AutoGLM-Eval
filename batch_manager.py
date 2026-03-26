@@ -108,6 +108,8 @@ class BatchAgentRunner:
             "--apikey", API_KEY,
             "--log_name", log_name,
             "--app", app,
+            "--start", start,
+            "--destination", destination,
             "--eval", "1",
             "--max-steps", "15", #参数步骤设置
             # "--max-steps", "1",
@@ -196,7 +198,7 @@ if __name__ == "__main__":
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误条件_v34_p25_c5_p30_360p_10_1"
 
     # 回退到 # ride_didi_p22 2026.3.22 尝试解决-坐标错误-点击终点定位错误.点到终点推荐的地址了,解决方法-点击“输入目的地”中的“输"字,区分终点情况
-    # eval_prompt = RideDidiPrompt.ride_didi_p22
+    eval_prompt = RideDidiPrompt.ride_didi_p22
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点坐标错误条件_v35_p22_c5_p30_360p_10_1"
 
     # ride_didi_p105 基于ride_didi_p22删除终点条件,  //滴滴起点当前
@@ -223,9 +225,19 @@ if __name__ == "__main__":
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_解决停在确认下车点_v38_p111_c5_小米_360p_20_1"
     # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_解决停在确认下车点_v38_p111_c5_p30_360p_50_2"
 
-    # ride_didi_p112
-    eval_prompt = RideDidiPrompt.ride_didi_p111
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_解决停在确认下车点_v39_p112_c5_p30_360p_30_1"
+    # ride_didi_p112 改终点提示词 为文字部分,错误增加
+    # eval_prompt = RideDidiPrompt.ride_didi_p111
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_解决停在确认下车点_v39_p112_c5_p30_360p_30_1"
+
+    # ride_didi_p112 问题1: 目的地址错误 实际原因:先点击终点地址 问题2:终点坐标错误 尝试解决: 1.让我先点击起点地址区域修改起点地址为“{start}”:  2.“从"字这个区域 3.还原在主页点击“输入目的地”中的“输"字,
+    # eval_prompt = RideDidiPrompt.ride_didi_p111 //这个忘记改提示词了
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_解决停在确认下车点_v39_p112_c5_p30_360p_30_1"
+
+
+    # eval_prompt = RideDidiPrompt.ride_didi_p112 #2/30  p112有 1 个终点坐标错误,1个打车错误,效果不是很高, 感觉可能 p111更好,至少要100次的2小时测试.
+
+    eval_prompt = RideDidiPrompt.ride_didi_p22
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点拦截_v41_p22_c6_p30_360p_30_2"
 
 
 

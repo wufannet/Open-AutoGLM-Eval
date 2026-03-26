@@ -15,9 +15,9 @@ from phone_agent.device_factory import get_device_factory
 class ActionResult:
     """Result of an action execution."""
 
-    success: bool
-    should_finish: bool
-    message: str | None = None
+    success: bool #是否执行操作成功
+    should_finish: bool #是否非成功情况提前完成,当前 #是否完成, finish类型和异常都会
+    message: str | None = None #入股欧式finish就是模型生辰纲的finish信息,否则是异常信息
     requires_confirmation: bool = False
 
 
@@ -70,13 +70,13 @@ class ActionHandler:
                 message=f"Unknown action type: {action_type}",
             )
 
-        action_name = action.get("action")
+        action_name = action.get("action") #获取action类型名
         # 安全防护检查打车呼叫错误
         # if action_name == "Tap":
 
 
 
-        handler_method = self._get_handler(action_name)
+        handler_method = self._get_handler(action_name) #通过类型名,获取对于的类型方法 通过 map映射,不用写条件分支
 
         if handler_method is None:
             return ActionResult(
@@ -163,7 +163,7 @@ class ActionHandler:
         abs_x, abs_y = element[0] , element[1]
         # check ride place order
         # Parsing action: do(action="Tap", element=[756,946])
-
+        #TODO 拦截器实现 这个安全拦截要抽取到业务代码中的拦截器,如果不安全,修改原本的的 action为 finish action.让 handler执行
         if abs_x > 500 and abs_y > 850 and step_count > 2: #解决执行禁止操作呼叫打车问题,解决首页广告错误判断打车错误,步数要大于 2
             return ActionResult(
                 success=False,

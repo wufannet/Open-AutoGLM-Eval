@@ -36,6 +36,10 @@ from phone_agent.xctest import list_devices as list_ios_devices
 from datetime import datetime
 from phone_agent.config.apps import APP_PACKAGES
 from dotenv import load_dotenv
+
+from ride.action_intercepter.RideDidiInterceptor import RideDidiInterceptor
+from ride.action_intercepter.RideHailingSafetyInterceptor import RideHailingSafetyInterceptor
+
 load_dotenv()
 
 def check_system_requirements(
@@ -530,6 +534,8 @@ Examples:
     )
     parser.add_argument("--log_name", type=str, default="")
     parser.add_argument("--app", type=str, default="") #评估清理环境,关闭应用包名
+    parser.add_argument("--start", type=str, default="") #评估清理环境,关闭应用包名
+    parser.add_argument("--destination", type=str, default="") #评估清理环境,关闭应用包名
     parser.add_argument("--eval", type=int,default=0,help="",
     )
 
@@ -822,9 +828,24 @@ def main():
             lang=args.lang,
         )
 
+
+        #TODO 1.实例化拦截器
+        # [!新增逻辑!] 组装你要启用的拦截器列表
+        business_interceptors = [
+            # ScreenBoundaryInterceptor(),  # 先做基础的坐标安全修正
+            RideHailingSafetyInterceptor(),  # 再做具体的业务风控拦截
+            # RideDidiInterceptor(start=args.start, destination=args.destination)
+        ]
+
+        if(args.app == "滴滴" or args.app == "滴滴出行"):
+            business_interceptors.append(RideDidiInterceptor(start=args.start, destination=args.destination))
+            #添加滴滴的点击终点和点击起点坐标修正
+
+
         agent = PhoneAgent(
             model_config=model_config,
             agent_config=agent_config,
+            interceptors=business_interceptors,  # 传入拦截器
         )
 
     # Print header
@@ -867,6 +888,10 @@ def main():
     # Run with provided task or enter interactive mode
     if args.task:
         print(f"\nTask: {args.task}\n")
+        #TODO 拦截器实现 传入拦截器列表, 技术选择
+        # 1.当前2种方案,方案 1只传一个不区分 action name类型的拦截列表,这样坏处是需要开发额外业务中判断是否是 tap动作.好处框架简单.反之是多传一个最常用的 tap类型拦截列表.
+        # 还有就是传入拦截方法列表还是拦截对象列表好?
+
         result = agent.run(args.task,image_save_path)
         print(f"\nResult: {result}")
     else:
@@ -987,8 +1012,8 @@ def launch_app(
             "1",
         ]
     print(f"prewarm launch_app ADB command: {' '.join(adb_command)}")
-    print("time.sleep(3)")
-    time.sleep(3) #代码直接预热启动后等待3秒在截图给 AI
+    print("time.sleep(4)")
+    time.sleep(4) #代码直接预热启动后等待3秒在截图给AI //没调过显示还有 1 秒,多 1 秒.
     return True
 
 if __name__ == "__main__":

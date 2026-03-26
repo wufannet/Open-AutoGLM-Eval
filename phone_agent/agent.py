@@ -6,6 +6,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from phone_agent.action_intercepter import ActionInterceptor
 from phone_agent.actions import ActionHandler
 from phone_agent.actions.handler import do, finish, parse_action, ActionResult
 from phone_agent.config import get_messages, get_system_prompt
@@ -58,6 +59,7 @@ class PhoneAgent:
         agent_config: Configuration for the agent behavior.
         confirmation_callback: Optional callback for sensitive action confirmation.
         takeover_callback: Optional callback for takeover requests.
+        interceptors: Optional interceptors for
 
     Example:
         >>> from phone_agent import PhoneAgent
@@ -74,6 +76,7 @@ class PhoneAgent:
         agent_config: AgentConfig | None = None,
         confirmation_callback: Callable[[str], bool] | None = None,
         takeover_callback: Callable[[str], None] | None = None,
+        interceptors: list[ActionInterceptor] | None = None,
     ):
         self.model_config = model_config or ModelConfig()
         self.agent_config = agent_config or AgentConfig()
@@ -84,12 +87,13 @@ class PhoneAgent:
             confirmation_callback=confirmation_callback,
             takeover_callback=takeover_callback,
         )
-
+        self.interceptors = interceptors or []
         self._context: list[dict[str, Any]] = []
         self._step_count = 0
         self._parse_action_error_count = 0
         self._error_log:  list[dict[str, Any]] = []
         self._image_save_path = "./logs"
+        self.action_after_user_msg = ""
 
 
     def run(self, task: str,image_save_path: str) -> str:
@@ -446,7 +450,11 @@ class PhoneAgent:
             )
         else:
             screen_info = MessageBuilder.build_screen_info(current_app)
-            text_content = f"** Screen Info **\n\n{screen_info}"
+            if self.action_after_user_msg:
+                text_content = f"{self.action_after_user_msg}\n\n** Screen Info **\n\n{screen_info}"
+            else:
+                text_content = f"** Screen Info **\n\n{screen_info}"
+
 
             self._context.append(
                 MessageBuilder.create_user_message(
@@ -462,7 +470,7 @@ class PhoneAgent:
             print("-" * 50)
             # response = self.model_client.request(self._context,is_print=False)
             responses = self.request_n(self._context,n = 3, text_content=text_content)
-            response = self.get_best_response(responses)
+            response = self.get_best_response(responses) #TODO WF 这里如果没有解析成功的应该在此请求的,直接在此请求,最多3次.也可选重新截图操作
             print(f"get_best_response json step {self._step_count}:\n{json.dumps(vars(response), indent=2, ensure_ascii=False)}\nget_best_response end")
 
         except Exception as e:
@@ -519,17 +527,75 @@ class PhoneAgent:
         if parse_action_ok or self._parse_action_error_count > self.agent_config.max_parse_action_error: #解析成功,或者错误大于 3 次
             #1.执行action
             try:
-                result = self.action_handler.execute(
-                    action, screenshot.width, screenshot.height, self._step_count
-                )
+                # TODO 拦截器实现 在处理action前,进行拦截,返回拦截处理过的 action,如果符合条件就方法修改后的 action,否则返回原本 action,如果经过拦截命中经过修改打印日志
+                # =======================================================
+                #  1. 执行前置拦截器 (责任链模式)：支持将 1 个 Action 扩展为多个
+                # =======================================================
+                is_intercepted = False
+                modified_actions = None
+                intercept_msg = ""
+                intercept_action_result = None
+
+                # 依次经过所有拦截器
+                for interceptor in self.interceptors:
+                    #拦截器是独立的,不需要将处理过的 action传到下一个修改,一旦修改就不再执行后面的拦截器逻辑
+                    passed, result_actions, msg, result_action_result = interceptor.before_execute(
+                        action, screenshot.width, screenshot.height, self._step_count,response
+                    )
+
+                    if not passed: #条件命中,停止后续的拦截器执行
+                        modified_actions = result_actions
+                        intercept_msg = msg
+                        intercept_action_result = result_action_result
+                        if not modified_actions: # 方法的 actions不为 null,就执行修改的,否则就是拦截不执行动作
+                            is_intercepted = True
+                        break  # 一旦被某个拦截器阻断，跳出拦截链
+
+                # =======================================================
+                # 2. 根据拦截结果决定是执行还是直接返回失败
+                # =======================================================
+                if is_intercepted:
+                    print(f"拦截器-被拦截,intercept_msg: {intercept_msg}")
+                    # 如果被拦截，不调用设备执行，直接伪造一个失败的 ActionResult
+                    if intercept_action_result is None:
+                        result = ActionResult(
+                            success=False,
+                            should_finish=True,  # 或 False 看你业务，True代表任务终止
+                            message=intercept_msg
+                        )
+                    else:
+                        result = intercept_action_result #拦截器有返回的action_result,直接用,更可控
+
+                else:
+                    # 正常放行，调用真实的 handler
+                    # print(f"拦截器-正常放行，调用真实的 handler modified_actions: {modified_actions}")
+                    if not modified_actions :
+                        print(f"拦截器-执行原有的 action: {intercept_msg}")
+                        #没有经过修改,执行原有的 action
+                        result = self.action_handler.execute(
+                            action, screenshot.width, screenshot.height, self._step_count
+                        )
+                    else:
+                        # 执行经过修改的actions
+                        # 逐个执行拦截器处理后的动作列表
+                        print(f"拦截器-执行修改过的 modified_actions: {modified_actions}")
+                        for execute_act in modified_actions:
+                            result = self.action_handler.execute(
+                                execute_act, screenshot.width, screenshot.height, self._step_count
+                            )
+                            # 如果列表中的某个动作执行失败，或者触发了 should_finish，立刻中断后续动作的执行
+                            if not result.success or result.should_finish:
+                                break
+                        self.action_after_user_msg = intercept_msg
+
             except Exception as e:
                 if self.agent_config.verbose:
                     traceback.print_exc()
-                result = self.action_handler.execute(
+                result = self.action_handler.execute(  #直接执行一个finish action,什么都不会走,返回一个 finish ActionResult
                     finish(message=str(e)), screenshot.width, screenshot.height, self._step_count
                 )
                 result.success = False #执行报错不成功
-                # Add assistant response to context # 模型方法都 think和 action会使用解析后的添加进上下文发送到下一次
+            # Add assistant response to context # 模型方法都 think和 action会使用解析后的添加进上下文发送到下一次
             #2.添加响应到上下文
             self._context.append(
                 MessageBuilder.create_assistant_message(
@@ -546,8 +612,8 @@ class PhoneAgent:
             )
 
 
-        # Check if finished 3.答应完成
-        finished = action.get("_metadata") == "finish" or result.should_finish
+        # Check if finished 3.任务完成, 不代表成功
+        finished = action.get("_metadata") == "finish" or result.should_finish #action为 finish,或者异常导致的should_finish
 
         if finished and self.agent_config.verbose:
             msgs = get_messages(self.agent_config.lang)
