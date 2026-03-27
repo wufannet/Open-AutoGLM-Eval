@@ -82,8 +82,8 @@ def get_screenshot(device_id: str | None = None, timeout: int = 10,local_image_d
 
         # 修改上传给模型截图分辨率,当前360p
         if width >= 1080:
-            # resized_height, resized_width = int(height / 2), int(width / 2)
-            resized_height, resized_width = int(height / 4), int(width / 4)
+            resized_height, resized_width = int(height / 2), int(width / 2) #540P
+            # resized_height, resized_width = int(height / 4), int(width / 4) #270p
         elif width >= 720:
             resized_height, resized_width = int(height / 2), int(width / 2)
             # resized_height, resized_width = int(dummy_image.height*0.75), int(dummy_image.width * 0.75)
