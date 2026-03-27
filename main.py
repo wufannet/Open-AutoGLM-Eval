@@ -38,6 +38,7 @@ from phone_agent.config.apps import APP_PACKAGES
 from dotenv import load_dotenv
 
 from ride.action_intercepter.RideDidiInterceptor import RideDidiInterceptor
+from ride.action_intercepter.RideGdInterceptor import RideGdInterceptor
 from ride.action_intercepter.RideHailingSafetyInterceptor import RideHailingSafetyInterceptor
 from ride.action_intercepter.RideHxzInterceptor import RideHxzInterceptor
 
@@ -844,7 +845,7 @@ def main():
         elif(args.app == "花小猪" or args.app == "花小猪打车"):
             business_interceptors.append(RideHxzInterceptor(start=args.start, destination=args.destination))
         elif(args.app == "高德" or args.app == "高德地图"):
-            business_interceptors.append(RideDidiInterceptor(start=args.start, destination=args.destination))
+            business_interceptors.append(RideGdInterceptor(start=args.start, destination=args.destination))
 
         agent = PhoneAgent(
             model_config=model_config,

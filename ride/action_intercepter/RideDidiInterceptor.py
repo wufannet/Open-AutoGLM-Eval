@@ -24,10 +24,10 @@ class RideDidiInterceptor(ActionInterceptor):
             self, action: Dict[str, Any], screen_width: int, screen_height: int, step_count: int,response : ModelResponse,
     ) -> Tuple[bool, Optional[List[Dict[str, Any]]], Optional[str],Optional[ActionResult]]:
         #修改点击终点 为点击终点+type地址
-
+        TAG = "滴滴拦截器"
         thinking_text = response.thinking or ""
-        # print(f"拦截器-滴滴拦截器进入 thinking_text:'{thinking_text}'")
-        # print(f"拦截器-滴滴拦截器进入 action:'{action}'")
+        # print(f"拦截器-{TAG}进入 thinking_text:'{thinking_text}'")
+        # print(f"拦截器-{TAG}进入 action:'{action}'")
 
 
         if action.get("action") == "Tap":
@@ -51,7 +51,7 @@ class RideDidiInterceptor(ActionInterceptor):
                     modified_action = copy.deepcopy(action)
                     modified_action["element"] = [new_x, new_y]
                     if(new_x != abs_x and new_y != abs_y):
-                        print(f"滴滴拦截器 点击终点坐标修改: ({x},{y}) -> ({new_x},{new_y})")
+                        print(f"{TAG} 点击终点坐标修改: ({x},{y}) -> ({new_x},{new_y})")
 
                     # "action_obj": {
                     #     "_metadata": "do",
@@ -65,7 +65,7 @@ class RideDidiInterceptor(ActionInterceptor):
                         "text": self.destination
                     }
 
-                    print(f"拦截器-滴滴拦截器终点拦截器生效, ⚡触发宏指令: [点击终点]  + [输入 {self.destination}]")
+                    print(f"拦截器-{TAG}终点拦截器生效, ⚡触发宏指令: [点击终点]  + [输入 {self.destination}]")
                     #TODO 额外添加一个 type输入destination的操作,这样点击终点搜索框+输入终点地址2个操作可以一次模型调用完成,加快速度
                     # msg = "我已经通过type输入了要求的目的地地址,接下来需要点击匹配的目的地址来完成设置目的地址"
                     msg = f"""让我先点击搜索框输入地址。
@@ -108,7 +108,7 @@ do(action="Type", text="{self.destination}").
                         "text": self.start
                     }
 
-                    print(f"拦截器-滴滴拦截器起点拦截器生效, ⚡触发宏指令: [点击起点]  + [输入 {self.start}]")
+                    print(f"拦截器-{TAG}起点拦截器生效, ⚡触发宏指令: [点击起点]  + [输入 {self.start}]")
                     # TODO 额外添加一个 type输入的操作,这样点击终点搜索框+输入2个操作可以一次模型调用完成,加快速度
                     # msg = "我已经输入框中通过type输入了要求的起点地址,接下来需要点击匹配的起点地址来完成修改起点地址"
                     msg = f"""让我先点击搜索框输入地址。

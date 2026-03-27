@@ -22,6 +22,7 @@ APP_PACKAGES: dict[str, str] = {
     "知乎": "com.zhihu.android",
     # Maps & Navigation
     "高德地图": "com.autonavi.minimap",
+    "高德": "com.autonavi.minimap",
     "百度地图": "com.baidu.BaiduMap",
     # Food & Services
     "美团": "com.sankuai.meituan",
