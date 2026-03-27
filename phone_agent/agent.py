@@ -547,7 +547,7 @@ class PhoneAgent:
                         modified_actions = result_actions
                         intercept_msg = msg
                         intercept_action_result = result_action_result
-                        if not modified_actions: # 方法的 actions不为 null,就执行修改的,否则就是拦截不执行动作
+                        if not modified_actions: # 拦截器返回的修改后的actions不为null,就执行修改的,否则就是拦截不执行动作 #
                             is_intercepted = True
                         break  # 一旦被某个拦截器阻断，跳出拦截链
 
