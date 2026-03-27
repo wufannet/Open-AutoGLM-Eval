@@ -21,7 +21,8 @@ class RideHailingSafetyInterceptor(ActionInterceptor):
                     error_msg = "触发安全风控：打车呼叫错误,禁止执行打车呼叫区域的点击"
                     print(f"RideHailingSafetyInterceptor 拦截器 error_msg: {error_msg}")
                     actionResutl =  ActionResult(
-                        success=False, #如果当做成功,只用改这个参数
+                        # success=False, #如果当做成功,只用改这个参数
+                        success=True, #在打车价格页面点击了打车,直接返回为完成完成,
                         should_finish=True,
                         # message="User cancelled sensitive operation 打车呼叫错误 ",
                         message=error_msg,
