@@ -450,7 +450,7 @@ class PhoneAgent:
             )
         else:
             screen_info = MessageBuilder.build_screen_info(current_app)
-            if self.action_after_user_msg:
+            if self.action_after_user_msg: #添加拦截器修改执行后的额外状态和下一步操作引导信息
                 text_content = f"{self.action_after_user_msg}\n\n** Screen Info **\n\n{screen_info}"
             else:
                 text_content = f"** Screen Info **\n\n{screen_info}"
@@ -461,6 +461,7 @@ class PhoneAgent:
                     text=text_content, image_base64=screenshot.base64_data
                 )
             )
+            self.action_after_user_msg = "" #重置为空字符串
 
         # Get model response
         try:
