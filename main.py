@@ -39,6 +39,7 @@ from dotenv import load_dotenv
 
 from ride.action_intercepter.RideDidiInterceptor import RideDidiInterceptor
 from ride.action_intercepter.RideHailingSafetyInterceptor import RideHailingSafetyInterceptor
+from ride.action_intercepter.RideHxzInterceptor import RideHxzInterceptor
 
 load_dotenv()
 
@@ -840,7 +841,10 @@ def main():
         if(args.app == "滴滴" or args.app == "滴滴出行"):
             business_interceptors.append(RideDidiInterceptor(start=args.start, destination=args.destination))
             #添加滴滴的点击终点和点击起点坐标修正
-
+        elif(args.app == "花小猪" or args.app == "花小猪打车"):
+            business_interceptors.append(RideHxzInterceptor(start=args.start, destination=args.destination))
+        elif(args.app == "高德" or args.app == "高德地图"):
+            business_interceptors.append(RideDidiInterceptor(start=args.start, destination=args.destination))
 
         agent = PhoneAgent(
             model_config=model_config,

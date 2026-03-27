@@ -26,8 +26,8 @@ class RideDidiInterceptor(ActionInterceptor):
         #修改点击终点 为点击终点+type地址
 
         thinking_text = response.thinking or ""
-        print(f"拦截器-滴滴拦截器进入 thinking_text:'{thinking_text}'")
-        print(f"拦截器-滴滴拦截器进入 action:'{action}'")
+        # print(f"拦截器-滴滴拦截器进入 thinking_text:'{thinking_text}'")
+        # print(f"拦截器-滴滴拦截器进入 action:'{action}'")
 
 
         if action.get("action") == "Tap":
@@ -40,12 +40,15 @@ class RideDidiInterceptor(ActionInterceptor):
                 # 1.点击终点坐标修改,终点拦截器
                 # 现在我应该点击"输入目的地"这个搜索框。do(action="Tap", element=[272,524])
                 # do(action="Tap", element=[499, 524]). 搜索框
-                if (abs_x > 200 and abs_x < 520 and abs_y > 500 and abs_y < 550 and  ( "搜索框" in thinking_text or "输入目的地" in thinking_text )
+                new_x = 272  # 假设模型输出的是 0-1000 相对坐标
+                new_y = 524 #467
+                # x_range = 25
+                y_range = 25
+
+                if (200 < abs_x < 550 and  new_y- y_range < abs_y <new_y + y_range  and  ( "搜索框" in thinking_text or "输入目的地" in thinking_text )
                         and ( self.start == "" or step_count>2 )):
                     # 匹配坐标区域 并且 包含关键字  并且 没有起点地址配置或者步数大于2,有起点时,第一步是点击起点+输入,第二步是选择匹配的起点,点击终点需要是第三步
                     modified_action = copy.deepcopy(action)
-                    new_x = 272  # 假设模型输出的是 0-1000 相对坐标
-                    new_y = 524
                     modified_action["element"] = [new_x, new_y]
                     if(new_x != abs_x and new_y != abs_y):
                         print(f"滴滴拦截器 点击终点坐标修改: ({x},{y}) -> ({new_x},{new_y})")
@@ -81,14 +84,14 @@ do(action="Type", text="{self.destination}").
 
                 #让我先点击"从民发天地-东门（夹直信）上车"这个区域来修改起点地址。
                 # do(action="Tap", element=[499,181])
+                new_x = 499  # 假设模型输出的是 0-1000 相对坐标
+                new_y = 467
                 if self.start!="" and (
-                        ( 200 < abs_x < 520 and abs_y > 400 and abs_y < 550 and ("起点" in thinking_text or "上车" in thinking_text))
-                        or  (200 < abs_x < 560 and abs_y > 400 and abs_y < 550 and ("修改起点地址" in thinking_text or "正在获取上车地点" in thinking_text))
+                        ( 200 < abs_x < 560 and 400 < abs_y < new_y + y_range and ("起点" in thinking_text or "上车" in thinking_text))
+                        or (200 < abs_x < 560 and 400 < abs_y < new_y + y_range and ("修改起点地址" in thinking_text or "正在获取上车地点" in thinking_text))
                         or (200 < abs_x < 560 and abs_y < 550 and ( "起点" in thinking_text ) and step_count == 1 )
                 ):
                     modified_action = copy.deepcopy(action)
-                    new_x = 499  # 假设模型输出的是 0-1000 相对坐标
-                    new_y = 467
                     modified_action["element"] = [new_x, new_y]
                     if (new_x != abs_x and new_y != abs_y):
                         print(f"拦截器 点击起点坐标修改: ({x},{y}) -> ({new_x},{new_y})")
