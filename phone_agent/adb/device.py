@@ -25,14 +25,18 @@ def get_current_app(device_id: str | None = None) -> str:
         adb_prefix + ["shell", "dumpsys", "window"], capture_output=True, text=True, encoding="utf-8"
     )
     output = result.stdout
+    # print(f"\nCurrent app name output: {output}")
     if not output:
         raise ValueError("No output from dumpsys window")
 
     # Parse window focus info
     for line in output.split("\n"):
-        if "mCurrentFocus" in line or "mFocusedApp" in line:
+        # if "mCurrentFocus" in line or "mFocusedApp" in line: #fix 获取当前应用名错误,删除mFocusedApp条件
+        if "mCurrentFocus" in line:
+            # print(f"\nCurrent app name line: {line}")
             for app_name, package in APP_PACKAGES.items():
                 if package in line:
+                    # print(f"\nCurrent app name app_name: {app_name}, package: {package}")
                     return app_name
 
     return "System Home"
