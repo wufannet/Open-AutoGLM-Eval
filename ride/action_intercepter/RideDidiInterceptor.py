@@ -64,7 +64,10 @@ class RideDidiInterceptor(ActionInterceptor):
 
                     print(f"拦截器-滴滴拦截器终点拦截器生效, ⚡触发宏指令: [点击终点]  + [输入 {self.destination}]")
                     #TODO 额外添加一个 type输入destination的操作,这样点击终点搜索框+输入终点地址2个操作可以一次模型调用完成,加快速度
-                    msg = "我已经通过type输入了要求的目的地地址,接下来需要点击匹配的目的地址来完成设置目的地址"
+                    # msg = "我已经通过type输入了要求的目的地地址,接下来需要点击匹配的目的地址来完成设置目的地址"
+                    msg = f"""让我先点击搜索框输入地址。
+do(action="Type", text="{self.destination}").
+好的，我已经输入了"{self.destination}"""
                     return False, [modified_action,type_action], msg,None
 
 
@@ -75,9 +78,14 @@ class RideDidiInterceptor(ActionInterceptor):
                 # 让我点击"从 民发天地·东门 上车"这个区域来修改起点地址。do(action="Tap", element=[499,467])
                 # 让我点击"从 民发天地-东门 上车"这个区域。do(action="Tap", element=[499,464])
                 # [499,467]). 起点,上车,修改起点(点击地图情况先不做,先这样)
+
+                #让我先点击"从民发天地-东门（夹直信）上车"这个区域来修改起点地址。
+                # do(action="Tap", element=[499,181])
                 if self.start!="" and (
                         ( 200 < abs_x < 520 and abs_y > 400 and abs_y < 550 and ("起点" in thinking_text or "上车" in thinking_text))
-                        or  (200 < abs_x < 560 and abs_y > 400 and abs_y < 550 and ("来修改起点地址" in thinking_text or "正在获取上车地点" in thinking_text)) ):
+                        or  (200 < abs_x < 560 and abs_y > 400 and abs_y < 550 and ("修改起点地址" in thinking_text or "正在获取上车地点" in thinking_text))
+                        or (200 < abs_x < 560 and abs_y < 550 and ( "起点" in thinking_text ) and step_count == 1 )
+                ):
                     modified_action = copy.deepcopy(action)
                     new_x = 499  # 假设模型输出的是 0-1000 相对坐标
                     new_y = 467
@@ -99,7 +107,10 @@ class RideDidiInterceptor(ActionInterceptor):
 
                     print(f"拦截器-滴滴拦截器起点拦截器生效, ⚡触发宏指令: [点击起点]  + [输入 {self.start}]")
                     # TODO 额外添加一个 type输入的操作,这样点击终点搜索框+输入2个操作可以一次模型调用完成,加快速度
-                    msg = "我已经输入框中通过type输入了要求的起点地址,接下来需要点击匹配的起点地址来完成修改起点地址"
+                    # msg = "我已经输入框中通过type输入了要求的起点地址,接下来需要点击匹配的起点地址来完成修改起点地址"
+                    msg = f"""让我先点击搜索框输入地址。
+                    do(action="Type", text="{self.start}").
+                    好的，我已经输入了"{self.start}"""
                     return False, [modified_action, type_action], msg, None
 
 
