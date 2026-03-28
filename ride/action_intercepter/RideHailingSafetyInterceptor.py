@@ -21,8 +21,9 @@ class RideHailingSafetyInterceptor(ActionInterceptor):
                     error_msg = "触发安全风控：打车呼叫错误,禁止执行打车呼叫区域的点击"
                     print(f"RideHailingSafetyInterceptor 拦截器 error_msg: {error_msg}")
                     actionResutl =  ActionResult(
-                        # success=False, #如果当做成功,只用改这个参数
-                        success=True, #在打车价格页面点击了打车,直接返回为完成完成,
+                        # 现在我需要点击搜索按钮或者选择其中一个搜索结果。我应该点击右下角的"搜索"按钮来进行搜索。do(action="Tap", element=[848, 954])
+                        success=False, #如果当做成功,只用改这个参数  #fix 打车错误的安全拦截器还是返回失败,方便记录错误和拍错,有输入法点击搜索的情况
+                        # success=True, #在打车价格页面点击了打车,直接返回为完成完成,
                         should_finish=True,
                         # message="User cancelled sensitive operation 打车呼叫错误 ",
                         message=error_msg,
