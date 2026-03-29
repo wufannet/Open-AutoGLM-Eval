@@ -72,7 +72,7 @@ class RideHxzInterceptor(ActionInterceptor):
                     # 匹配坐标区域 并且 包含关键字  并且 没有起点地址配置或者步数大于2,有起点时,第一步是点击起点+输入,第二步是选择匹配的起点,点击终点需要是第三步
                     modified_action = copy.deepcopy(action)
                     modified_action["element"] = [new_x, new_y]
-                    if(new_x != abs_x and new_y != abs_y):
+                    if(new_x != abs_x or new_y != abs_y):
                         print(f"{TAG} 点击终点坐标修改: ({x},{y}) -> ({new_x},{new_y})")
 
                     # "action_obj": {
@@ -122,7 +122,7 @@ do(action="Type", text="{self.destination}").
                     modified_action = copy.deepcopy(action)
 
                     modified_action["element"] = [new_x, new_y]
-                    if (new_x != abs_x and new_y != abs_y):
+                    if (new_x != abs_x or new_y != abs_y):
                         print(f"拦截器 点击起点坐标修改: ({x},{y}) -> ({new_x},{new_y})")
 
                     # "action_obj": {

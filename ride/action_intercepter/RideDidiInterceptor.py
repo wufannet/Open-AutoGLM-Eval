@@ -26,8 +26,8 @@ class RideDidiInterceptor(ActionInterceptor):
         #修改点击终点 为点击终点+type地址
         TAG = "滴滴拦截器"
         thinking_text = response.thinking or ""
-        # print(f"拦截器-{TAG}进入 thinking_text:'{thinking_text}'")
-        # print(f"拦截器-{TAG}进入 action:'{action}'")
+        print(f"拦截器-{TAG}进入 thinking_text:'{thinking_text}'")
+        print(f"拦截器-{TAG}进入 action:'{action}'")
 
 
         if action.get("action") == "Tap":
