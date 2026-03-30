@@ -33,7 +33,7 @@ if not API_KEY:
 DESTINATIONS= [
     "民发天地-东门",
     "勇士篮球总部",
-    # "民发天地东门",
+    "民发天地东门",
     "万达广场1号门",
     "勇士篮球总部", #前面20个能2次,且有没有推荐 2 种情况都有
     "襄阳市第一人民医院东院区门诊",
@@ -55,7 +55,7 @@ DESTINATIONS= [
 # start = "民发天地南门"
 # start = "襄阳市第一人民医院东院区门诊"
 # start = "襄阳东站北出站口"
-start = "襄阳刘集机场到达"
+# start = "襄阳刘集机场到达"
 # start = "石油大厦长虹路"
 
 RUN_COUNT = 1
@@ -236,12 +236,45 @@ if __name__ == "__main__":
 
     # eval_prompt = RideDidiPrompt.ride_didi_p112 #2/30  p112有 1 个终点坐标错误,1个打车错误,效果不是很高, 感觉可能 p111更好,至少要100次的2小时测试.
 
+    # eval_prompt = RideDidiPrompt.ride_didi_p22
+    # eval_prompt = RideDidiPrompt.ride_didi_p112
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_fix重复type_v43_p112_c10_小米_360p_10_1"
+
+
+    #问题: 指令不完整
+    # eval_prompt = RideDidiPrompt.ride_didi_p112_2
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_fix起点点到上面_v44_p1122_c10_小米_360p_10_1"
+    # app = "滴滴"
+
+    # eval_prompt = RideDidiPrompt.ride_didi_p115
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_fix指令不完整_v45_p115_c10_小米_360p_10_1"
+    # app = "滴滴"
+
+    # eval_prompt = RideDidiPrompt.ride_didi_p117
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_fix指令不完整_v45_p115_c10_小米_360p_10_1"
+    # app = "滴滴"
+
+    # eval_prompt = RideDidiPrompt.ride_didi_p114
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_fix指令不完整_v45_p115_c10_小米_360p_10_1"
+    # app = "滴滴"
+
     eval_prompt = RideDidiPrompt.ride_didi_p22
-    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_点击终点拦截_v41_p22_c6_p30_360p_30_2"
+    BASE_LOG_DIR = f"./logs_eval/{current_time}_滴滴_fix指令不完整_v45_p115_c10_小米_360p_10_1"
+    app = "滴滴"
+    start = ""
+
+
+    # eval_prompt = RideDidiPrompt.ride_hxz_p101
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_花小猪_拦截器_v45_p101_c10_p30_360p_10_1"
+    # app = "花小猪"
+
+    # eval_prompt = RideDidiPrompt.ride_gd_p101
+    # BASE_LOG_DIR = f"./logs_eval/{current_time}_高德_拦截器_v46_p101_c10_p30_360p_10_1"
+    # app = "高德"
 
 
 
-    RUN_COUNT = 30
+    RUN_COUNT = 20
     runner = BatchAgentRunner()
     runner.start()
     # 2. 任务结束后直接调用评估 (传入刚才定义的 BASE_LOG_DIR)
